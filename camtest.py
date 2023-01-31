@@ -9,6 +9,9 @@ import time
 import requests
 
 from picamera2 import Picamera2, Preview
+from Adafruit_Thermal import *
+
+printer = Adafruit_Thermal('/dev/serial0', 19200, timeout=5)
 
 picam2 = Picamera2()
 
@@ -24,9 +27,14 @@ time.sleep(2)
 # TODO: make saved images have a unique filename
 metadata = picam2.capture_file('images/test.jpg')
 # FOR DEBUGGING: print metadata
-print(metadata)
+#print(metadata)
 # FOR DEBUGGING: note that image has been saved
 print('----- SUCCESS: image saved locally')
+
+# receipt printer prints status update
+printer.println('\n\nAI poetry camera')
+#printer.println('\n\nThinking...')
+#printer.println('\n\nWriting...')
 
 # Takes a photo and saves to memory
 #image = picam2.capture_image()
@@ -54,5 +62,10 @@ with open('images/test.jpg', 'rb') as f:
 response = requests.post(api_url, files=files)
 response_data = response.json()
 
-# print response to console for debugging
-print(response_data)
+# FOR DEBUGGING: print response to console for debugging
+# print(response_data)
+
+# print poem!!!
+printer.println('\n')
+printer.println(response_data['poem'])
+printer.println('\n\n\n\n')
