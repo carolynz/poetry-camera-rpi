@@ -4,10 +4,17 @@ Still in development...
 
 ## Hardware
 Currently using:
-- [Raspberry Pi 3B+](https://www.raspberrypi.com/products/raspberry-pi-3-model-b-plus/) + [5V MicroUSB power supply](https://www.amazon.com/CanaKit-Raspberry-Supply-Adapter-Listed/dp/B00MARDJZ4)
+- [Raspberry Pi 3B+](https://www.raspberrypi.com/products/raspberry-pi-3-model-b-plus/)
+  - [5V MicroUSB power supply](https://www.amazon.com/CanaKit-Raspberry-Supply-Adapter-Listed/dp/B00MARDJZ4) 
+  - [Adafruit case](https://www.adafruit.com/product/2258)
+  - [32GB MicroSD card to load the OS](https://www.canakit.com/raspberry-pi-sd-card-noobs.html)
+  - Keyboard & monitor for programming
 - [RPi Camera Module 3](https://www.raspberrypi.com/products/camera-module-3/)
+  - [Arducam case with tripod](https://www.amazon.com/Arducam-Raspberry-Bundle-Autofocus-Lightweight/dp/B09TKYXZFG)
 - [Adafruit Mini Thermal Printer](https://www.adafruit.com/product/600)
-  - Accessories: 5V power supply, Female DC Power Adapter, wire cutters, wire stripper, tiny screwdriver
+  - [5V power supply](https://www.adafruit.com/product/276)
+  - [Female DC Power Adapter](https://www.adafruit.com/product/368)
+  - Wire cutters, wire stripper, tiny screwdriver for wiring together
 - [EcoChit thermal receipt paper, 2.25"](https://www.amazon.com/EcoChit-Thermal-Paper-Rolls-Plants/dp/B076MMDL8Y) (phenol-free, recyclable)
   - Don't use regular thermal paper! [It's toxic](https://environmentaldefence.ca/2019/02/07/toxic-receipt-bpa-thermal-paper/)
 
@@ -16,6 +23,7 @@ Future hardware updates for usability and portability:
 - Add cellular connection to RPi so you can take it anywhere
 - Switch to [Nano Thermal Printer](https://www.adafruit.com/product/2752) so it's more portable
 - Add shutter and power buttons
+- Add LED to indicate camera is on / loading
 - Add knob to adjust poem settings
 - Add battery pack to power both RPi and Thermal Printer
 
