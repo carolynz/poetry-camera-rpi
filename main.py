@@ -20,9 +20,9 @@ picam2 = Picamera2()
 # NEXT 3 LINES FOR DEBUGGING: computer preview of image
 # Slows down the program considerably
 # Only use for checking camera object
-#preview_config = picam2.create_preview_configuration(main={"size": (800, 600)})
-#picam2.configure(preview_config)
-#picam2.start_preview(Preview.QTGL)
+preview_config = picam2.create_preview_configuration(main={"size": (800, 600)})
+picam2.configure(preview_config)
+picam2.start_preview(Preview.QTGL)
 
 # start camera
 picam2.start()
@@ -55,13 +55,19 @@ now = datetime.now()
 # Format printed datetime like:
 # Jan 1, 2023
 # 8:11 PM
+printer.justify('C') # center align header text
 date_string = now.strftime('%b %-d, %Y')
 time_string = now.strftime('%-I:%M %p')
 printer.println('\n')
 printer.println(date_string)
 printer.println(time_string)
+printer.println()
 
 # TODO: get and print location
+
+printer.println("`'. .'`'. .'`'. .'`'. .'`'. .'`")
+printer.println("   `     `     `     `     `   ")
+
 
 
 #########################
@@ -90,16 +96,19 @@ response_data = response.json()
 ############
 # print poem
 ############
+printer.justify('L') # left align poem text
 printer.println(response_data['poem'])
-printer.println('\n')
+printer.println()
 
 ##############
 # print footer
 ##############
 printer.justify('C') # center align footer text
-printer.println('------------------')
+printer.println("   .     .     .     .     .   ")
+printer.println("_.` `._.` `._.` `._.` `._.` `._")
 printer.println('\n')
-printer.println(' This poem was written by AI.\n')
-printer.println('Learn more at')
+printer.println(' This poem was written by AI.')
+printer.println()
+printer.println('Explore the archives at')
 printer.println('poetry.camera')
 printer.println('\n\n\n\n')
