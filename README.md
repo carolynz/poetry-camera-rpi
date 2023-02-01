@@ -30,7 +30,7 @@ Future hardware updates for usability and portability:
 ## Software
 Currently, the `camtest.py` script running on the Pi:
 - Automatically takes a photo when you run it
-- Sends photo to the server, a [Flask app on Replit](https://poetry-camera-prototype.carozee.repl.co/))
+- Sends photo to the server, a [Flask app on Replit](https://poetry-camera-prototype.carozee.repl.co/)
 - Receives an AI-generated poem from server
 - Prints poem out on thermal receipt printer
 
@@ -55,9 +55,9 @@ This was cobbled together from the following tutorials:
 sudo raspi-config
 ```
 4. You'll want to adjust the following settings:
-  - Glamor: ON (for newer versions of Raspbian OS)
-  - Serial Port ON (lets you access receipt printer inputs)
-  - Serial Console OFF (idk what this does)
+    - Glamor: ON (for Camera setup on newer versions of Raspbian OS)
+    - Serial Port ON (lets you access receipt printer inputs)
+    - Serial Console OFF (idk what this does)
 
     Restart the system as needed.
 
@@ -91,7 +91,9 @@ cd poetry-camera-rpi
 ```
 10. *If* your printer's baud rate is different from `19200`, open `camtest.py` and replace that number with your own printer's baud rate:
 ```shell
-#instantiate printer
+# camtest.py:
+
+# instantiate printer
 printer = Adafruit_Thermal('/dev/serial0', 19200, timeout=5)
 ```
 
@@ -100,7 +102,6 @@ printer = Adafruit_Thermal('/dev/serial0', 19200, timeout=5)
 python camtest.py
 ```
 
-The camera will immediately take a photo and the receipt printer should print out a poem.
+    The camera will immediately take a photo and the receipt printer should print out a poem.
 
 Lots of errors in these instructions, I'm sure.
-
