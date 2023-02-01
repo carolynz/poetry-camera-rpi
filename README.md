@@ -28,7 +28,7 @@ Future hardware updates for usability and portability:
 - Add battery pack to power both RPi and Thermal Printer
 
 ## Software
-Currently, the `camtest.py` script running on the Pi:
+Currently, the `main.py` script running on the Pi:
 - Automatically takes a photo when you run it
 - Sends photo to the server, a [Flask app on Replit](https://poetry-camera-prototype.carozee.repl.co/)
 - Receives an AI-generated poem from server
@@ -89,9 +89,9 @@ git clone https://github.com/carolynz/poetry-camera-rpi.git
 ```shell
 cd poetry-camera-rpi
 ```
-10. *If* your printer's baud rate is different from `19200`, open `camtest.py` and replace that number with your own printer's baud rate:
+10. *If* your printer's baud rate is different from `19200`, open `main.py` and replace that number with your own printer's baud rate:
 ```shell
-# camtest.py:
+# main.py:
 
 # instantiate printer
 printer = Adafruit_Thermal('/dev/serial0', 19200, timeout=5)
@@ -99,9 +99,9 @@ printer = Adafruit_Thermal('/dev/serial0', 19200, timeout=5)
 
 11. Run the poetry camera script.
 ```shell
-python camtest.py
+python main.py
 ```
 
-    The camera will immediately take a photo and the receipt printer should print out a poem.
+The camera will immediately take a photo and the receipt printer should print out a poem.
 
 Lots of errors in these instructions, I'm sure.
