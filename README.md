@@ -32,26 +32,26 @@ This was cobbled together from the following tutorials:
 - [Networked Thermal Printer using Raspberry Pi and CUPS](https://learn.adafruit.com/networked-thermal-printer-using-cups-and-raspberry-pi)
 
 
-Set up your Raspberry Pi with Camera connection.
+1. Set up your Raspberry Pi with Camera connection.
 
-Open up the Terminal on your RPi.
+2. Open up the Terminal on your RPi.
 
-Set up Raspberry Pi hardware to take Camera & Serial inputs:
+3. Set up Raspberry Pi hardware to take Camera & Serial inputs:
 ```shell
 sudo raspi-config
 ```
-You'll want to adjust the following settings:
-- Glamor: ON (for newer versions of Raspbian OS)
-- Serial Port ON (lets you access receipt printer inputs)
-- Serial Console OFF (idk what this does)
+4. You'll want to adjust the following settings:
+  - Glamor: ON (for newer versions of Raspbian OS)
+  - Serial Port ON (lets you access receipt printer inputs)
+  - Serial Console OFF (idk what this does)
 
-Update the system and install prerequisites. I think I did something different for `wiringpi` as it is outdated; will update once I remember what I did.
+5. Update the system and install prerequisites. I think I did something different for `wiringpi` as it is outdated; will update once I remember what I did.
 ```shell
 sudo apt-get update
 sudo apt-get install git cups wiringpi build-essential libcups2-dev libcupsimage2-dev python3-serial python-pil python-unidecode
 ```
 
-Install some software required to make the Adafruit Thermal Printer work.
+6. Install some software required to make the Adafruit Thermal Printer work.
 ```shell
 cd
 git clone https://github.com/adafruit/zj-58
@@ -60,22 +60,21 @@ make
 sudo ./install
 ```
 
-Clone this repo, which contains our Poetry Camera software:
+7. Clone this repo, which contains our Poetry Camera software:
 ```shell
 cd
 git clone https://github.com/carolynz/poetry-camera-rpi.git
 ```
 
+8. Connect your thermal printer to power and Raspberry Pi GPIO pins (likely 14 & 15). [See diagram and instructions in this tutorial.](https://learn.adafruit.com/networked-thermal-printer-using-cups-and-raspberry-pi/connect-and-configure-printer)
 
-Connect your thermal printer to power and Raspberry Pi GPIO pins (likely 14 & 15). [See diagram and instructions in this tutorial.](https://learn.adafruit.com/networked-thermal-printer-using-cups-and-raspberry-pi/connect-and-configure-printer)
 
-
-Open the `poetry-camera-rpi` directory:
+9. Open the `poetry-camera-rpi` directory:
 ```shell
 cd poetry-camera-rpi
 ```
 
-Run the poetry camera script.
+10. Run the poetry camera script.
 ```shell
 python camtest.py
 ```
