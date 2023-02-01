@@ -6,7 +6,8 @@ Still in development...
 Currently using:
 - [Raspberry Pi 3B+](https://www.raspberrypi.com/products/raspberry-pi-3-model-b-plus/) + [5V MicroUSB power supply](https://www.amazon.com/CanaKit-Raspberry-Supply-Adapter-Listed/dp/B00MARDJZ4)
 - [RPi Camera Module 3](https://www.raspberrypi.com/products/camera-module-3/)
-- [Adafruit Mini Thermal Printer + 5V power supply](https://www.adafruit.com/product/600)
+- [Adafruit Mini Thermal Printer](https://www.adafruit.com/product/600)
+  - Accessories: 5V power supply, Female DC Power Adapter, wire cutters, wire stripper, tiny screwdriver
 - [EcoChit thermal receipt paper, 2.25"](https://www.amazon.com/EcoChit-Thermal-Paper-Rolls-Plants/dp/B076MMDL8Y) (phenol-free, recyclable)
   - Don't use regular thermal paper! [It's toxic](https://environmentaldefence.ca/2019/02/07/toxic-receipt-bpa-thermal-paper/)
 
@@ -21,7 +22,6 @@ Future hardware updates for usability and portability:
 ## Software
 Python script running on the Pi (currently) automatically takes a photo when you run it, then sends it to a server ([Flask app on Replit](https://poetry-camera-prototype.carozee.repl.co/)). Receives an AI-generated poem in response.
 
-Might add RPi img file for easy backup later, if that's not a terrible security idea.
 
 ## How to set up
 At some point I will upload the .img file that you can copy to an SD card and just insert into your Raspberry Pi and go on your merry way.
