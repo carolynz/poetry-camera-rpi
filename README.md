@@ -34,6 +34,7 @@ Currently, the `camtest.py` script running on the Pi:
 - Receives an AI-generated poem from server
 - Prints poem out on thermal receipt printer
 
+The `Adafruit_Thermal.py` script is [Adafruit's thermal printer Python library](https://github.com/adafruit/Python-Thermal-Printer).
 
 ## How to set up
 At some point I will upload the .img file that you can copy to an SD card and just insert into your Raspberry Pi and go on your merry way.
@@ -47,7 +48,7 @@ This was cobbled together from the following tutorials:
 
 1. Set up your Raspberry Pi with Camera connection.
 
-2. Open up the Terminal on your RPi.
+2. Open up the Terminal on your Pi.
 
 3. Set up Raspberry Pi hardware to take Camera & Serial inputs:
 ```shell
@@ -58,7 +59,9 @@ sudo raspi-config
   - Serial Port ON (lets you access receipt printer inputs)
   - Serial Console OFF (idk what this does)
 
-5. Update the system and install prerequisites. I think I did something different for `wiringpi` as it is outdated; will update once I remember what I did.
+    Restart the system as needed.
+
+5. Update the system and install requirements. I think I did something different for `wiringpi` as it is outdated; will update once I remember what I did. You can also skip `wiringpi` for now, it will only be used with the buttons (I think).
 ```shell
 sudo apt-get update
 sudo apt-get install git cups wiringpi build-essential libcups2-dev libcupsimage2-dev python3-serial python-pil python-unidecode
@@ -79,15 +82,20 @@ cd
 git clone https://github.com/carolynz/poetry-camera-rpi.git
 ```
 
-8. Connect your thermal printer to power and Raspberry Pi GPIO pins (likely 14 & 15). [See diagram and instructions in this tutorial.](https://learn.adafruit.com/networked-thermal-printer-using-cups-and-raspberry-pi/connect-and-configure-printer)
-
+8. Set up your thermal printer, connecting it to power and your Pi. [See diagram and instructions in this tutorial.](https://learn.adafruit.com/networked-thermal-printer-using-cups-and-raspberry-pi/connect-and-configure-printer)
+   Test that it works. Pay attention to your printer's baud rate (e.g. `19200`). We will use this later on.
 
 9. Open the `poetry-camera-rpi` directory:
 ```shell
 cd poetry-camera-rpi
 ```
+10. *If* your printer's baud rate is different from `19200`, open `camtest.py` and replace that number with your own printer's baud rate:
+```shell
+#instantiate printer
+printer = Adafruit_Thermal('/dev/serial0', 19200, timeout=5)
+```
 
-10. Run the poetry camera script.
+11. Run the poetry camera script.
 ```shell
 python camtest.py
 ```
@@ -95,3 +103,4 @@ python camtest.py
 The camera will immediately take a photo and the receipt printer should print out a poem.
 
 Lots of errors in these instructions, I'm sure.
+
