@@ -30,10 +30,3 @@ def wrap_text(text, line_length):
     wrapped_text += current_line.strip() + '\n'
 
   return wrapped_text
-
-response_poem = 'Glasses perched atop my face\nForehead framed between two lenses\nCheek bones rising for the lens’ embrace\nLips curving under the gaze of vision care\nA picture frame for the depth of my stare\nEyebrows aiding in the smile of my face\nMouth curved and alive under every lash\nEyelashes extending with an arch of grace\nA portrait of perfection and warm embrace'
-
-print(response_poem)
-
-wrapped_string = wrap_text(response_poem, 32)
-print(wrapped_string)
