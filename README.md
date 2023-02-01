@@ -20,13 +20,18 @@ Future hardware updates for usability and portability:
 - Add battery pack to power both RPi and Thermal Printer
 
 ## Software
-Python script running on the Pi (currently) automatically takes a photo when you run it, then sends it to a server ([Flask app on Replit](https://poetry-camera-prototype.carozee.repl.co/)). Receives an AI-generated poem in response.
+Currently, the `camtest.py` script running on the Pi:
+- Automatically takes a photo when you run it
+- Sends photo to the server, a [Flask app on Replit](https://poetry-camera-prototype.carozee.repl.co/))
+- Receives an AI-generated poem from server
+- Prints poem out on thermal receipt printer
 
 
 ## How to set up
 At some point I will upload the .img file that you can copy to an SD card and just insert into your Raspberry Pi and go on your merry way.
 
 Until then, here's my setup.
+
 This was cobbled together from the following tutorials:
 - [Instant Camera using Raspberry Pi and Thermal Printer](https://learn.adafruit.com/instant-camera-using-raspberry-pi-and-thermal-printer)
 - [Networked Thermal Printer using Raspberry Pi and CUPS](https://learn.adafruit.com/networked-thermal-printer-using-cups-and-raspberry-pi)
