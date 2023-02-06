@@ -61,33 +61,33 @@ sudo raspi-config
 
     Restart the system as needed.
 
-5. Update the system and install requirements. I think I did something different for `wiringpi` as it is outdated; will update once I remember what I did. You can also skip `wiringpi` for now, it will only be used with the buttons (I think).
+5. Update the system and install requirements. I'm not sure you even need all of these; I can go over these again later and trim out the unnecessary ones.
 ```shell
-sudo apt-get update
-sudo apt-get install git cups wiringpi build-essential libcups2-dev libcupsimage2-dev python3-serial python-pil python-unidecode
+$ sudo apt-get update
+$ sudo apt-get install git cups build-essential libcups2-dev libcupsimage2-dev python3-serial python-pil python-unidecode
 ```
 
 6. Install some software required to make the Adafruit Thermal Printer work.
 ```shell
-cd
-git clone https://github.com/adafruit/zj-58
-cd zj-58
-make
-sudo ./install
+$ cd
+$ git clone https://github.com/adafruit/zj-58
+$ cd zj-58
+$ make
+$ sudo ./install
 ```
 
 7. Clone this repo, which contains our Poetry Camera software:
 ```shell
-cd
-git clone https://github.com/carolynz/poetry-camera-rpi.git
+$ cd
+$ git clone https://github.com/carolynz/poetry-camera-rpi.git
 ```
 
 8. Set up your thermal printer, connecting it to power and your Pi. [See diagram and instructions in this tutorial.](https://learn.adafruit.com/networked-thermal-printer-using-cups-and-raspberry-pi/connect-and-configure-printer)
    Test that it works. Pay attention to your printer's baud rate (e.g. `19200`). We will use this later on.
 
-9. Open the `poetry-camera-rpi` directory:
+9. Open our `poetry-camera-rpi` directory:
 ```shell
-cd poetry-camera-rpi
+$ cd poetry-camera-rpi
 ```
 10. *If* your printer's baud rate is different from `19200`, open `main.py` and replace that number with your own printer's baud rate:
 ```shell
@@ -99,9 +99,29 @@ printer = Adafruit_Thermal('/dev/serial0', 19200, timeout=5)
 
 11. Run the poetry camera script.
 ```shell
-python main.py
+$ python main.py
 ```
 
-The camera will immediately take a photo and the receipt printer should print out a poem.
+## TODO instructions for adding buttons
+
+## TODO instructions for auto-start/shutoff
+- Set up a `cron` job to run your python script at startup. First, open your `crontab` file to your default editor:
+```shell
+$ crontab -e
+```
+
+- Then add the following line to your `crontab`, to run the script when you boot up the computer.
+```shell
+# Run poetry camera script at start
+@reboot python /home/pi/poetry-camera-rpi/main.py >> /home/pi/poetry-camera-rpi/errors.txt 2>&1
+```
+The `>> {...}errors.txt 2>&1` writes any error messages to `errors.txt` for debugging. A common failure mode is files cannot be found. Make sure that all your filepaths are absolute filepaths and have the right usernames and directory names.
+
+- Reboot the system for this to take effect
+```shell
+sudo reboot
+```
+
+- Try clicking your shutter and power buttons to make sure they're working upon reboot. If they're not working, check your `errors.txt` file.
 
 Lots of errors in these instructions, I'm sure.
