@@ -31,7 +31,7 @@ time.sleep(2) # warmup period since first few frames are often poor quality
 #picam2.start_preview(Preview.QTGL)
 
 #instantiate buttons
-shutter_button = Button(21)
+shutter_button = Button(16)
 power_button = Button(26, hold_time = 2)
 
 #############################
@@ -48,7 +48,7 @@ def take_photo_and_print_poem():
   #image = picam2.capture_image()
   #print(image)
 
-  # Close camera
+  # Close camera -- commented out because this can only happen at end of program
   # picam2.close()
 
   # FOR DEBUGGING: note that image has been saved
@@ -146,6 +146,7 @@ def shutdown():
 #################################
 def handle_keyboard_interrupt(sig, frame):
   print('Ctrl+C received, stopping script')
+  picam2.close()
   exit(0)
 
 signal.signal(signal.SIGINT, handle_keyboard_interrupt)
