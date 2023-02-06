@@ -38,7 +38,7 @@ power_button = Button(26, hold_time = 2)
 #############################
 def take_photo_and_print_poem():
   # Take photo & save it
-  metadata = picam2.capture_file('images/image.jpg')
+  metadata = picam2.capture_file('/home/carolynz/CamTest/images/image.jpg')
 
   # FOR DEBUGGING: print metadata
   #print(metadata)
@@ -91,7 +91,7 @@ def take_photo_and_print_poem():
   # files = {'file': image}
 
   # Read file that was saved to disk as a byte array
-  with open('images/image.jpg', 'rb') as f:
+  with open('/home/carolynz/CamTest/images/image.jpg', 'rb') as f:
     byte_im = f.read()
 
     # prep format for API call
