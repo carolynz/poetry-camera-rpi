@@ -4,11 +4,10 @@
 # Capture a JPEG while still running in the preview mode. When you
 # capture to a file, the return value is the metadata for that image.
 
-import time, requests, signal
+import time, requests, signal, os
 
 from picamera2 import Picamera2, Preview
 from gpiozero import LED, Button
-from sys import exit
 from Adafruit_Thermal import *
 from wraptext import *
 from datetime import datetime
@@ -137,7 +136,8 @@ def take_photo_and_print_poem():
 ##############
 def shutdown():
   print('shutdown button held for 2s')
-#  check_call(['sudo','poweroff'])
+  print('shutting down now')
+  os.system('sudo shutdown -h now')
 
 #################################
 # For RPi debugging:
@@ -146,8 +146,9 @@ def shutdown():
 #################################
 def handle_keyboard_interrupt(sig, frame):
   print('Ctrl+C received, stopping script')
-  picam2.close()
-  exit(0)
+
+  #weird workaround I found from rpi forum to shut down script without crashing the pi
+  os.kill(os.getpid(), signal.SIGUSR1)
 
 signal.signal(signal.SIGINT, handle_keyboard_interrupt)
 
