@@ -21,7 +21,8 @@ def wrap_text(text, line_length):
       else:
 
         # finish current_line, add it to our output wrapped_text
-        wrapped_text += current_line.strip() + '\n    '
+        # also adds extra spaces for next line's indent
+        wrapped_text += current_line.strip() + '\n   '
 
         # start new current_line
         current_line = word + ' '
