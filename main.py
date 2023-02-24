@@ -85,7 +85,7 @@ def take_photo_and_print_poem():
   #########################
   # Send saved image to API
   #########################
-  api_url = 'https://poetry-camera-prototype.carozee.repl.co/pic_to_poem'
+  api_url = 'https://poetry-camera.carozee.repl.co/pic_to_poem'
 
   # OLD: get PIL Image object from memory
   # files = {'file': image}
