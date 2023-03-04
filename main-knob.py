@@ -13,7 +13,7 @@ from wraptext import *
 from datetime import datetime
 
 #instantiate printer
-printer = Adafruit_Thermal('/dev/serial0', 19200, timeout=5)
+printer = Adafruit_Thermal('/dev/serial0', 9600, timeout=5)
 
 #instantiate camera
 picam2 = Picamera2()
@@ -41,9 +41,9 @@ knob4 = Button(5)
 knob5 = Button(6)
 knob6 = Button(13)
 knob7 = Button(19)
-knob8 = Button(23)
+knob8 = Button(25)
 knob9 = Button(24)
-knob10 = Button(25)
+knob10 = Button(23)
 current_knob = None
 
 
@@ -166,11 +166,11 @@ def get_poem_format():
   # default
   # note: if no poem format is passed to API,
   # the prompt will default to "2 verses of 4 lines, ABAB rhyme scheme" (knob 1) 
-  poem_format = '2 verses of 4 lines, ABAB rhyme scheme'
+  poem_format = '8 lines or less, ABAB rhyme scheme'
 
   if knob1.is_pressed:
     # default/auto
-    poem_format = '2 verses of 4 lines, ABAB rhyme scheme'
+    poem_format = '8 lines or less, ABAB rhyme scheme'
   elif knob2.is_pressed:
     poem_format = 'haiku'
   elif knob3.is_pressed:
@@ -178,17 +178,17 @@ def get_poem_format():
   elif knob4.is_pressed:
     poem_format = 'sonnet'
   elif knob5.is_pressed:
-    poem_format = 'short free verse poem in the style of e.e. cummings'
+    poem_format = 'short poem about the people in this scene. what they look like, how they feel, what their stories are. if there are multiple people, what their relationships might be to each other.'
   elif knob6.is_pressed:
-    poem_format = 'short poem in the style of Emily Dickinson'
+    poem_format = 'short poem about the landscape, background, or location of this scene'
   elif knob7.is_pressed:
-    poem_format = 'short poem in the style of William Shakespeare'
+    poem_format = 'short poem about the text described in this scene'
   elif knob8.is_pressed:
     poem_format = 'short poem in the style of T.S. Eliot'
   elif knob9.is_pressed:
-    poem_format = 'short poem in the style of Robert Frost'
+    poem_format = 'short poem in the style of William Shakespeare'
   elif knob10.is_pressed:
-    poem_format = 'short poem in the style of Sylvia Plath'
+    poem_format = 'short poem in the style of Emily Dickinson'
 
   # For debugging
   print('----- POEM FORMAT: ' + poem_format)

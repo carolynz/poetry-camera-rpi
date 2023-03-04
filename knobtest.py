@@ -7,9 +7,9 @@ switch4 = Button(5)
 switch5 = Button(6)
 switch6 = Button(13)
 switch7 = Button(19)
-switch8 = Button(23)
+switch8 = Button(25)
 switch9 = Button(24)
-switch10 = Button(25)
+switch10 = Button(23)
 
 while True:
   if switch1.is_pressed:
