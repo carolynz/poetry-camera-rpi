@@ -1,6 +1,6 @@
-# From picamera2 examples: capture_jpeg.py 
+# takeFrom picamera2 examples: capture_jpeg.py 
 #!/usr/bin/python3
-
+:
 # Capture a JPEG while still running in the preview mode. When you
 # capture to a file, the return value is the metadata for that image.
 
@@ -13,7 +13,7 @@ from wraptext import *
 from datetime import datetime
 
 #instantiate printer
-printer = Adafruit_Thermal('/dev/serial0', 19200, timeout=5)
+printer = Adafruit_Thermal('/dev/serial0', 9600, timeout=5)
 
 #instantiate camera
 picam2 = Picamera2()
@@ -21,22 +21,18 @@ picam2 = Picamera2()
 picam2.start()
 time.sleep(2) # warmup period since first few frames are often poor quality
 
-# NEXT 3 LINES FOR DEBUGGING: computer preview of image
-# Slows down the program considerably
-# Only use for checking camera object
-# TODO: WHY DOES THIS PREVIEW NOT WORK OVER SSH?
-#preview_config = picam2.create_preview_configuration(main={"size": (800, 600)})
-#picam2.configure(preview_config)
-#picam2.start_preview(Preview.QTGL)
-
 #instantiate buttons
-shutter_button = Button(16)
-power_button = Button(26, hold_time = 2)
+shutter_button = Button(16, hold_time = 2)
+led = LED(20)
+
 
 #############################
 # CORE PHOTO-TO-POEM FUNCTION
 #############################
 def take_photo_and_print_poem():
+  # blink LED in a background thread
+  led.blink()
+
   # Take photo & save it
   metadata = picam2.capture_file('/home/carolynz/CamTest/images/image.jpg')
 
@@ -128,7 +124,8 @@ def take_photo_and_print_poem():
   printer.println('poetry.camera')
   printer.println('\n\n\n\n')
 
-  print('-----DONE PRINTING')
+  led.off()
+
   return
 
 ##############
@@ -137,6 +134,7 @@ def take_photo_and_print_poem():
 def shutdown():
   print('shutdown button held for 2s')
   print('shutting down now')
+  led.off()
   os.system('sudo shutdown -h now')
 
 #################################
@@ -146,16 +144,37 @@ def shutdown():
 #################################
 def handle_keyboard_interrupt(sig, frame):
   print('Ctrl+C received, stopping script')
+  led.off()
 
   #weird workaround I found from rpi forum to shut down script without crashing the pi
   os.kill(os.getpid(), signal.SIGUSR1)
 
 signal.signal(signal.SIGINT, handle_keyboard_interrupt)
 
+
+#################
+# Button handlers
+#################
+def handle_pressed():
+  led.on()
+  print("button pressed!")
+  take_photo_and_print_poem()
+
+def handle_held():
+  print("button held!")
+  shutdown()
+
+def handle_released():
+  print("released")
+  led.off()
+
+
+
 ################################
 # LISTEN FOR BUTTON PRESS EVENTS
 ################################
 shutter_button.when_pressed = take_photo_and_print_poem
-power_button.when_held = shutdown
+shutter_button.when_held = shutdown
+shutter_button.when_released = handle_released
 
 signal.pause()
