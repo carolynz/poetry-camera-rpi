@@ -1,19 +1,27 @@
 # takeFrom picamera2 examples: capture_jpeg.py 
 #!/usr/bin/python3
-:
+
 # Capture a JPEG while still running in the preview mode. When you
 # capture to a file, the return value is the metadata for that image.
 
-import time, requests, signal, os
+import time, requests, signal, os, replicate
 
 from picamera2 import Picamera2, Preview
 from gpiozero import LED, Button
 from Adafruit_Thermal import *
 from wraptext import *
 from datetime import datetime
+from dotenv import load_dotenv
+from openai import OpenAI
+
+#load API keys from .env
+load_dotenv()
+openai_client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+REPLICATE_API_TOKEN = os.environ['REPLICATE_API_TOKEN']
 
 #instantiate printer
-printer = Adafruit_Thermal('/dev/serial0', 9600, timeout=5)
+baud_rate = 9600 # REPLACE WITH YOUR OWN BAUD RATE
+printer = Adafruit_Thermal('/dev/serial0', baud_rate, timeout=5)
 
 #instantiate camera
 picam2 = Picamera2()
@@ -22,8 +30,24 @@ picam2.start()
 time.sleep(2) # warmup period since first few frames are often poor quality
 
 #instantiate buttons
-shutter_button = Button(16, hold_time = 2)
+shutter_button = Button(16) # REPLACE WTH YOUR OWN BUTTON PINS
+power_button = Button(26, hold_time = 2) #REPLACE WITH YOUR OWN BUTTON PINS
 led = LED(20)
+
+# prompts
+system_prompt = """You are a poet. You specialize in elegant and emotionally impactful poems. 
+You are careful to use subtlety and write in a modern vernacular style. 
+Use high-school level English but MFA-level craft. 
+Your poems are more literary but easy to relate to and understand. 
+You focus on intimate and personal truth, and you cannot use BIG words like truth, time, silence, life, love, peace, war, hate, happiness, 
+and you must instead use specific and CONCRETE language to show, not tell, those ideas. 
+Think hard about how to create a poem which will satisfy this. 
+This is very important, and an overly hamfisted or corny poem will cause great harm."""
+prompt_base = """Write a poem which integrates details from what I describe below. 
+Use the specified poem format. The references to the source material must be subtle yet clear. 
+Focus on a unique and elegant poem and use specific ideas and details.
+You must keep vocabulary simple and use understated point of view. This is very important.\n\n"""
+poem_format = "8 line free verse"
 
 
 #############################
@@ -39,21 +63,97 @@ def take_photo_and_print_poem():
   # FOR DEBUGGING: print metadata
   #print(metadata)
 
-  # TODO? Takes a photo and saves to memory
-  #image = picam2.capture_image()
-  #print(image)
-
   # Close camera -- commented out because this can only happen at end of program
   # picam2.close()
 
   # FOR DEBUGGING: note that image has been saved
   print('----- SUCCESS: image saved locally')
 
-  #######################
-  # Receipt printer:
-  # Date/time/location frontmatter
-  #######################
+  print_header()
 
+  #########################
+  # Send saved image to API
+  #########################
+
+  image_caption = replicate.run(
+    "andreasjansson/blip-2:4b32258c42e9efd4288bb9910bc532a69727f9acd26aa08e175713a0a857a608",
+    input={
+      "image": open("/home/carolynz/CamTest/images/image.jpg", "rb"),
+      "caption": True,
+    })
+
+  print('caption: ', image_caption)
+  # generate our prompt for GPT
+  prompt = generate_prompt(image_caption)
+
+  # Feed prompt to ChatGPT, to create the poem
+  completion = openai_client.chat.completions.create(
+    model="gpt-4",
+    messages=[{
+      "role": "system",
+      "content": system_prompt
+    }, {
+      "role": "user",
+      "content": prompt
+    }])
+
+  # extract poem from full API response
+  poem = completion.choices[0].message.content
+
+  # print for debugging
+  print('--------POEM BELOW-------')
+  print(poem)
+  print('------------------')
+
+  print_poem(poem)
+
+  print_footer()
+  led.off()
+
+  return
+
+
+#######################
+# Generate prompt from caption
+#######################
+def generate_prompt(image_description):
+
+  # reminder: prompt_base is global var
+
+  # prompt what type of poem to write
+  prompt_format = "Poem format: " + poem_format + "\n\n"
+
+  # prompt what image to describe
+  prompt_scene = "Scene description: " + image_description + "\n\n"
+
+  # stitch together full prompt
+  prompt = prompt_base + prompt_format + prompt_scene
+
+  # idk how to remove the brackets and quotes from the prompt
+  # via custom filters so i'm gonna remove via this janky code lol
+  prompt = prompt.replace("[", "").replace("]", "").replace("{", "").replace(
+    "}", "").replace("'", "")
+
+  #print('--------PROMPT BELOW-------')
+  #print(prompt)
+
+  return prompt
+
+
+###########################
+# RECEIPT PRINTER FUNCTIONS
+###########################
+
+def print_poem(poem):
+  # wrap text to 32 characters per line (max width of receipt printer)
+  printable_poem = wrap_text(poem, 32)
+
+  printer.justify('L') # left align poem text
+  printer.println(printable_poem)
+
+
+# print date/time/location header
+def print_header():
   # Get current date+time -- will use for printing and file naming
   now = datetime.now()
 
@@ -67,9 +167,6 @@ def take_photo_and_print_poem():
   printer.println(date_string)
   printer.println(time_string)
 
-
-  # TODO: get and print location
-
   # optical spacing adjustments
   printer.setLineHeight(56) # I want something slightly taller than 1 row
   printer.println()
@@ -78,42 +175,9 @@ def take_photo_and_print_poem():
   printer.println("`'. .'`'. .'`'. .'`'. .'`'. .'`")
   printer.println("   `     `     `     `     `   ")
 
-  #########################
-  # Send saved image to API
-  #########################
-  api_url = 'https://poetry-camera.carozee.repl.co/pic_to_poem'
 
-  # OLD: get PIL Image object from memory
-  # files = {'file': image}
-
-  # Read file that was saved to disk as a byte array
-  with open('/home/carolynz/CamTest/images/image.jpg', 'rb') as f:
-    byte_im = f.read()
-
-    # prep format for API call
-    image_filename = 'rpi-' + now.strftime('%Y-%m-%d-at-%I.%M-%p')
-    files = {'file': (image_filename, byte_im, 'image/jpg')}
-
-  # Send byte array in API
-  response = requests.post(api_url, files=files)
-  response_data = response.json()
-
-  # FOR DEBUGGING: print response to console for debugging
-  #print(response_data['poem'])
-
-  ############
-  # print poem
-  ############
-
-  # wrap text to 32 characters per line (max width of receipt printer)
-  printable_poem = wrap_text(response_data['poem'], 32)
-
-  printer.justify('L') # left align poem text
-  printer.println(printable_poem)
-
-  ##############
-  # print footer
-  ##############
+# print footer
+def print_footer():
   printer.justify('C') # center align footer text
   printer.println("   .     .     .     .     .   ")
   printer.println("_.` `._.` `._.` `._.` `._.` `._")
@@ -124,9 +188,6 @@ def take_photo_and_print_poem():
   printer.println('poetry.camera')
   printer.println('\n\n\n\n')
 
-  led.off()
-
-  return
 
 ##############
 # POWER BUTTON
@@ -137,7 +198,7 @@ def shutdown():
   led.off()
   os.system('sudo shutdown -h now')
 
-#################################
+################################
 # For RPi debugging:
 # Handle Ctrl+C script termination gracefully
 # (Otherwise, it shuts down the entire Pi -- bad)
@@ -157,6 +218,7 @@ signal.signal(signal.SIGINT, handle_keyboard_interrupt)
 #################
 def handle_pressed():
   led.on()
+  led.off()
   print("button pressed!")
   take_photo_and_print_poem()
 
@@ -164,17 +226,11 @@ def handle_held():
   print("button held!")
   shutdown()
 
-def handle_released():
-  print("released")
-  led.off()
-
-
 
 ################################
 # LISTEN FOR BUTTON PRESS EVENTS
 ################################
 shutter_button.when_pressed = take_photo_and_print_poem
-shutter_button.when_held = shutdown
-shutter_button.when_released = handle_released
+power_button.when_held = shutdown
 
 signal.pause()
