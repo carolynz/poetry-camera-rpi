@@ -2,4 +2,4 @@ images/
 smallertest.py
 __pycache__/
 errors.txt
-
+.env
