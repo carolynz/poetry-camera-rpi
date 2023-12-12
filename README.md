@@ -35,17 +35,17 @@ Raspberry Pis are also recovering from a supply shortage. Check [rpilocator.com]
   
     
 ### 3. Camera: [Raspberry Pi Camera Module 3](https://www.raspberrypi.com/products/camera-module-3/)
-  <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/4fad7574-2933-448f-a556-d0d7990596ec" width="300">
+  <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/4fad7574-2933-448f-a556-d0d7990596ec" width="200">
 
   - **Camera accessories:**
     - [Camera case with tripod](https://www.amazon.com/Arducam-Raspberry-Bundle-Autofocus-Lightweight/dp/B09TKYXZFG) — The camera is delicate and can be easily fried via static. We fried 3 cameras in the process of making this. A protective case helps prevent this.
     - [Camera cable specifically for Pi Zero/Zero 2s](https://www.adafruit.com/product/3157) — If you are using a larger Pi, the camera cable that comes with the cable is fine
 
 
-### 4. Receipt printer: [Nano Thermal Printer](https://www.adafruit.com/product/2752)
 
-<img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/c05278eb-2f72-40ec-a0ed-f0f09530b4c6" width="300">
+### 4. Receipt printer: [Mini Thermal Printer w/ TTL Serial connection](https://www.adafruit.com/product/2752)
 
+<img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/209bbe14-b494-4826-8851-61561f4f34ac" width="300">
 
 This product has unfortunately been discontinued by Adafruit, but similar versions exist on Amazon. We are working on confirming that the Amazon part still works with the same printer drivers.
   - **Receipt printer accessories:**
@@ -60,6 +60,7 @@ This product has unfortunately been discontinued by Adafruit, but similar versio
   - Battery for the receipt printer
   - Battery for the Raspberry pi
 
+
 ### 6. Buttons
 <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/e8b280b5-f4b9-4495-94bb-c2e0cdd96cef" width="150">
 <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/f1c8251a-77d4-42d7-ad59-12562386182a" width="150">
@@ -67,18 +68,19 @@ This product has unfortunately been discontinued by Adafruit, but similar versio
   - 2 [push buttons in different colors](https://www.adafruit.com/search?q=16mm%20Panel%20Mount%20Momentary%20Pushbutton)
   - 2 [quick-connect wires](https://www.adafruit.com/product/1152) to easily connect these buttons to the Pi
 
+
+
 ### 7. Miscellaneous equipment
   - Wire cutter & stripper
   - Jumper cables
 
 ## Software
 - OpenAI account & API key. Each poem costs a couple cents to generate.
-- 
 
 Currently, the `main.py` script running on the Pi:
-- Automatically takes a photo when you run it
-- Sends photo to the server, a [Flask app on Replit](https://poetry-camera-prototype.carozee.repl.co/)
-- Receives an AI-generated poem from server
+- Takes a photo when you click the shutter button
+- Sends the photo to GPT-4 to create a poem
+- Receives an AI-generated poem from OpenAI
 - Prints poem out on thermal receipt printer
 
 The `Adafruit_Thermal.py` script is [Adafruit's thermal printer Python library](https://github.com/adafruit/Python-Thermal-Printer).
