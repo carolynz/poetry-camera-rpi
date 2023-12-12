@@ -38,8 +38,8 @@ Raspberry Pis are also recovering from a supply shortage. Check [rpilocator.com]
   <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/4fad7574-2933-448f-a556-d0d7990596ec" width="200">
 
   - **Camera accessories:**
-    - [Camera case with tripod](https://www.amazon.com/Arducam-Raspberry-Bundle-Autofocus-Lightweight/dp/B09TKYXZFG) — The camera is delicate and can be easily fried via static. We fried 3 cameras in the process of making this. A protective case helps prevent this.
-    - [Camera cable specifically for Pi Zero/Zero 2s](https://www.adafruit.com/product/3157) — If you are using a larger Pi, the camera cable that comes with the cable is fine
+    - [Camera case with tripod](https://www.amazon.com/Arducam-Raspberry-Bundle-Autofocus-Lightweight/dp/B09TKYXZFG) — The camera is delicate and can be easily fried via static. We destroyed 3 cameras in the process of making this. A protective case helps prevent it.
+    - [Camera cable sized specifically for Pi Zero & Zero 2](https://www.adafruit.com/product/3157) — If you are using a larger Pi, the default cable that comes with the camera is fine.
 
 
 
