@@ -1,33 +1,67 @@
-# AI Poetry Camera for Raspberry Pi
+# Poetry Camera
+A camera that prints poems of what it sees.
 
-Still in development...
+We started this project as newcomers to the world of hobby electronics. The following instructions are intended for complete beginners, as we were. We simplified some of the design to optimize for easily sourcing and assembling parts. If you are comfortable with electronics and coding, we encourage you to experiment and remix even more.
 
-## Hardware
-Currently using:
-- [Raspberry Pi 3B+](https://www.raspberrypi.com/products/raspberry-pi-3-model-b-plus/)
-  - [5V MicroUSB power supply](https://www.amazon.com/CanaKit-Raspberry-Supply-Adapter-Listed/dp/B00MARDJZ4) 
-  - [Adafruit case](https://www.adafruit.com/product/2258)
-  - [32GB MicroSD card to load the OS](https://www.canakit.com/raspberry-pi-sd-card-noobs.html)
-  - Keyboard & monitor for programming
-- [RPi Camera Module 3](https://www.raspberrypi.com/products/camera-module-3/)
-  - [Arducam case with tripod](https://www.amazon.com/Arducam-Raspberry-Bundle-Autofocus-Lightweight/dp/B09TKYXZFG)
-- [Adafruit Mini Thermal Printer](https://www.adafruit.com/product/600)
-  - [5V power supply](https://www.adafruit.com/product/276)
-  - [Female DC Power Adapter](https://www.adafruit.com/product/368)
-  - Wire cutters, wire stripper, tiny screwdriver for wiring together
-- [EcoChit thermal receipt paper, 2.25"](https://www.amazon.com/EcoChit-Thermal-Paper-Rolls-Plants/dp/B076MMDL8Y) (phenol-free, recyclable)
-  - Don't use regular thermal paper! [It's toxic](https://environmentaldefence.ca/2019/02/07/toxic-receipt-bpa-thermal-paper/)
+These instructions are still in progress. Try it out and let us know what's confusing, or doesn't work.
 
-Future hardware updates for usability and portability:
-- Switch to [RPi Zero W](https://www.raspberrypi.com/products/raspberry-pi-zero-w/) so it draws less power
-- Add cellular connection to RPi so you can take it anywhere
-- Switch to [Nano Thermal Printer](https://www.adafruit.com/product/2752) so it's more portable
-- Add shutter and power buttons
-- Add LED to indicate camera is on / loading
-- Add knob to adjust poem settings
-- Add battery pack to power both RPi and Thermal Printer
+## Hardware you'll need
+1. **Computer: [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/)** with headers
+
+<img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/a7da1fae-9521-431c-af47-5fe07e8dd43b" width="300" height="300">
+
+Raspberry Pis are simplified computers. They are lightweight, cheap, have limited processing power, and are more fragile than typical consumer electronic devices. It's very sensitive to the specific power sources you use — too much power and you'll fry the part, too little power and the software won't run. You also have to manually shut down the software before unplugging the power, to protect the software from being corrupted.
+
+We chose the Pi Zero 2 for its balance of processing power (Pi Zeros are too slow) and compact size (most other Pis on the market are larger). The wire diagrams in this tutorial will apply to all Raspberry Pis, but there may be differences in software. A [Pi 3b+](https://www.raspberrypi.com/products/raspberry-pi-3-model-b-plus/) also works fine, but a [Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/) probably requires too much power.
+
+Raspberry Pi Zero 2 is often sold without headers soldered on. You'll need headers to easily connect the Pi to the printer and buttons. If you buy the Pi without headers, you'll need to separately buy a [2x20 header](https://www.adafruit.com/product/2822) and solder them on yourself. It's not hard, but leaves more room for error.
+
+<img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/43c619a8-a416-4c18-8013-4ff36d1d1ba6" width="300" height="300"> <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/bdfb1bda-0691-41ac-a7e5-583b66d6cc71" width="300" height="300"> 
+
+Raspberry Pis are also recovering from a supply shortage. Check [rpilocator.com](https://rpilocator.com/) for live stock notifications on standalone parts (does not list accessory kits).
+
+2. **Accessories to connect the Raspberry Pi to stuff.**
+  <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/d482c0de-cca5-4ce3-ae4e-0ebc0bef1693" width="300" height="300">
+  
+  - [Vilros sells a kit that includes all of these things](https://vilros.com/products/vilros-raspberry-pi-zero-2-w-basic-starter-kit)
+    - [5V MicroUSB power supply](https://www.amazon.com/CanaKit-Raspberry-Supply-Adapter-Listed/dp/B00MARDJZ4) 
+    - [Case](https://www.adafruit.com/product/2258)
+    - [32GB MicroSD card to load the OS](https://www.canakit.com/raspberry-pi-sd-card-noobs.html)
+    - Heatsink to prevent overheating (very important!)
+  - Keyboard & mouse: we recommend this Logitech wireless combo keyboard-trackpad so it only takes up 1 port of your Pi.
+  - MicroUSB to USB adapter, for the Logitech keyboard's wireless sensor.
+  - External monitor for programming. It's not strictly required, but is more beginner-friendly than using a
+  - MiniHDMI to HDMI adapter for monitor
+    
+3. **Camera: [Raspberry Pi Camera Module 3](https://www.raspberrypi.com/products/camera-module-3/)**
+  <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/4fad7574-2933-448f-a556-d0d7990596ec" width="300" height="300">
+
+  - **Camera accessories:**
+    - [Camera case with tripod](https://www.amazon.com/Arducam-Raspberry-Bundle-Autofocus-Lightweight/dp/B09TKYXZFG) — The camera is delicate and can be easily fried via static. We fried 3 cameras in the process of making this. A protective case helps prevent this.
+    - [Camera cable specifically for Pi Zero/Zero 2s](https://www.adafruit.com/product/3157) — If you are using a larger Pi, the camera cable that comes with the cable is fine
+
+4. **Receipt printer: [Nano Thermal Printer](https://www.adafruit.com/product/2752)** This has been discontinued by Adafruit, but similar versions exist on Amazon. We are working on confirming that the Amazon part still work with the same printer drivers.
+  - Receipt printer accessories:
+    - [5V power supply](https://www.adafruit.com/product/276)
+    - [Female DC Power Adapter](https://www.adafruit.com/product/368)
+    - Wire cutters, wire stripper, tiny screwdriver for wiring together
+    - Receipt paper: [EcoChit thermal receipt paper, 2.25"](https://www.amazon.com/EcoChit-Thermal-Paper-Rolls-Plants/dp/B076MMDL8Y) (phenol-free, recyclable)
+        - Don't use regular receipt paper! [It's often filled with BPA](https://environmentaldefence.ca/2019/02/07/toxic-receipt-bpa-thermal-paper/), which is especially toxic for kids and reproductive health.
+
+5. **Batteries:**
+  - Battery for the receipt printer
+  - Battery for the Raspberry pi
+
+7. **Buttons** 
+
+6. **Miscellaneous equipment**
+  - Wire cutter & stripper
+  - Jumper cables
 
 ## Software
+- OpenAI account & API key. Each poem costs a couple cents to generate.
+- 
+
 Currently, the `main.py` script running on the Pi:
 - Automatically takes a photo when you run it
 - Sends photo to the server, a [Flask app on Replit](https://poetry-camera-prototype.carozee.repl.co/)
@@ -37,10 +71,6 @@ Currently, the `main.py` script running on the Pi:
 The `Adafruit_Thermal.py` script is [Adafruit's thermal printer Python library](https://github.com/adafruit/Python-Thermal-Printer).
 
 ## How to set up
-At some point I will upload the .img file that you can copy to an SD card and just insert into your Raspberry Pi and go on your merry way.
-
-Until then, here's my setup.
-
 This was cobbled together from the following tutorials:
 - [Instant Camera using Raspberry Pi and Thermal Printer](https://learn.adafruit.com/instant-camera-using-raspberry-pi-and-thermal-printer)
 - [Networked Thermal Printer using Raspberry Pi and CUPS](https://learn.adafruit.com/networked-thermal-printer-using-cups-and-raspberry-pi)
