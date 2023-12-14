@@ -1,9 +1,9 @@
 # Poetry Camera
 A camera that prints poems of what it sees.
 
-We started this project as newcomers to the world of hobby electronics. The following instructions are intended for complete beginners, as we were. We simplified some of the design to optimize for easily sourcing and assembling parts; as a result, it's less compact than our photographed versions. If you are comfortable with electronics and coding, we encourage you to experiment and remix even more.
+We started this project as newcomers to the world of hobby electronics. The following instructions are intended for complete beginners, as we were. We simplified some of the design to optimize for easily sourcing and assembling parts; as a result, it's less compact than our photographed versions. If you are comfortable with electronics and coding, we encourage you to experiment and remix even more. 
 
-These instructions are still in progress. Try it out and let us know what's confusing, or doesn't work.
+These instructions are still in progress. Try it out and let us know what's confusing, or doesn't work. We are also looking for help on improving the battery design.
 
 ## Hardware you'll need
 ### 1. Computer: [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/) with headers
@@ -37,28 +37,47 @@ Raspberry Pis are also recovering from a supply shortage. Check [rpilocator.com]
 ### 3. Camera: [Raspberry Pi Camera Module 3](https://www.raspberrypi.com/products/camera-module-3/)
   <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/4fad7574-2933-448f-a556-d0d7990596ec" width="200">
 
-  - **Camera accessories:**
-    - [Camera case with tripod](https://www.amazon.com/Arducam-Raspberry-Bundle-Autofocus-Lightweight/dp/B09TKYXZFG) — The camera is delicate and can be easily fried via static. We destroyed 3 cameras in the process of making this. A protective case helps prevent it.
-    - [Camera cable sized specifically for Pi Zero & Zero 2](https://www.adafruit.com/product/3157) — If you are using a larger Pi, the default cable that comes with the camera is fine.
+  Mostly straightforward, but be careful of damaging the hardware. The Raspberry Pi camera is delicate and can be easily fried via static. We broke 3 cameras in the process of making this project. Just make sure to always store it in a static-shielding bag when you're not using it.
 
+  If you are connecting the camera to a Pi Zero 2, note that the Zero 2's camera connection collar is also very delicate. We broke a Pi Zero 2 camera collar in the process of making this as well and had to just get a new Pi 🥲
+
+  We have not tested these instructions with older models of Raspberry Pi cameras.
+
+  - **Camera accessories:**
+    - [Camera case with tripod](https://www.amazon.com/Arducam-Raspberry-Bundle-Autofocus-Lightweight/dp/B09TKYXZFG) — Helps proteect the delicate camera hardware during development.
+    - [Camera cable sized specifically for Pi Zero & Zero 2](https://www.adafruit.com/product/3157) — If you are using a larger Pi, you only need default cable that comes with the camera. If you got your Zero 2 camera cable in a kit, it is likely the short ~2 inch cable. Make sure to get a long enough cable that gives you more flexibility in where you place your camera.
+    - Optional: Tweezer for opening/closing the delicate camera collar on Pi Zero 2
 
 
 ### 4. Receipt printer: [Mini Thermal Printer w/ TTL Serial connection](https://www.adafruit.com/product/2752)
 
 <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/209bbe14-b494-4826-8851-61561f4f34ac" width="300">
 
-This product has unfortunately been discontinued by Adafruit, but similar versions exist on Amazon. We are working on confirming that the Amazon part still works with the same printer drivers.
+We used the Adafruit thermal printer line for this project, but they have subsequently been discontinued. Similar products exist on Amazon; we are working on confirming that they still work with the same printer drivers (which are also no longer maintained by Adafruit, but still seem to work). 
+
+The important thing is that the thermal printer has a TTL serial connection so you can easily connect it to the Pi.
+
+The [Nano Thermal Printer](https://www.adafruit.com/product/2752) or [Thermal Printer Guts](https://www.adafruit.com/product/2753) are more compact, but have slightly different wiring.
+
   - **Receipt printer accessories:**
     - [5V power supply](https://www.adafruit.com/product/276)
-    - [Female DC Power Adapter](https://www.adafruit.com/product/368)
+    - [Female DC Power Adapter](https://www.adafruit.com/product/368) to connect receipt to power supply
     - Wire cutters, wire stripper, tiny screwdriver for wiring together
     - Receipt paper: [EcoChit thermal receipt paper, 2.25"](https://www.amazon.com/EcoChit-Thermal-Paper-Rolls-Plants/dp/B076MMDL8Y) (phenol-free, recyclable)
         - Don't use regular receipt paper! [It's often filled with BPA](https://environmentaldefence.ca/2019/02/07/toxic-receipt-bpa-thermal-paper/), which is especially toxic for kids and reproductive health.
 
 
 ### 5. Batteries:
-  - Battery for the receipt printer
-  - Battery for the Raspberry pi
+Batteries remain a challenge for this project because the Pi and the receipt printer have very different power requirements. You could always just keep Poetry Camera plugged in, but that restricts the amount of interesting photos you could take.
+
+We've heard of people having success with 2x 18620 batteries. We have not tried this yet, but it seems promising.
+
+  - Battery for the receipt printer: [6 x AA battery holder with 5.5mm/2.1mm plug](https://www.adafruit.com/product/248) + 6x AA batteries
+
+    <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/b3507b14-3b12-4fbc-99fa-ffc5c589bf93" width="300">
+    - The printer needs a 5-9V power source that can handle high current draw while printing. Typical 9V alkaline batteries do *not* work as they do not provide enough current. To keep things simple for assembly, we've separated out the power sources, but it makes things bulkier.
+  - Battery for the Raspberry Pi:
+    - The Pi needs consistent 5V of power in order to function, which standard phone battery packs do not provide, and the PiSugar battery we did find has also occasionally driven it to overheating.
 
 
 ### 6. Buttons
