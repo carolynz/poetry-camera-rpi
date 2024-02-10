@@ -86,33 +86,72 @@ def take_photo_and_print_poem():
   #########################
   # Send saved image to API
   #########################
-
+  """
   image_caption = replicate.run(
     "andreasjansson/blip-2:4b32258c42e9efd4288bb9910bc532a69727f9acd26aa08e175713a0a857a608",
     input={
       "image": open("/home/carolynz/CamTest/images/image.jpg", "rb"),
       "caption": True,
     })
+  """
+  try:
+    # Send saved image to API
+    with open("/home/carolynz/CamTest/images/image.jpg", "rb") as image_file:
+      image_caption = replicate.run(
+        "andreasjansson/blip-2:4b32258c42e9efd4288bb9910bc532a69727f9acd26aa08e175713a0a857a608",
+          input={
+            "image": image_file,
+            "caption": True,
+          })
 
-  print('caption: ', image_caption)
-  # generate our prompt for GPT
-  prompt = generate_prompt(image_caption)
+    print('caption: ', image_caption)
 
-  # Feed prompt to ChatGPT, to create the poem
-  completion = openai_client.chat.completions.create(
-    model="gpt-4",
-    messages=[{
-      "role": "system",
-      "content": system_prompt
-    }, {
-      "role": "user",
-      "content": prompt
-    }])
+    # Generate our prompt for GPT
+    prompt = generate_prompt(image_caption)
 
-  # extract poem from full API response
-  poem = completion.choices[0].message.content
+  except Exception as e:
+    error_message = str(e)
+    print("Error during image captioning: ", error_message)
+    print_poem(f"Alas, something went wrong.\n\nTechnical details:\n Error while recognizing image. {error_message}")
+    print_poem("\n\nTroubleshooting:")
+    print_poem("1. Check your wifi connection.")
+    print_poem("2. Try restarting the camera by holding the shutter button for 3 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
+    print_poem("3. You may just need to wait a bit and it will pass.")
+    print_footer()
+    led.on()
+    camera_at_rest = True
+    return
 
-  # print for debugging
+  try:
+    # Feed prompt to ChatGPT, to create the poem
+    completion = openai_client.chat.completions.create(
+      model="gpt-4",
+      messages=[{
+        "role": "system",
+        "content": system_prompt
+      }, {
+        "role": "user",
+        "content": prompt
+      }])
+
+    # extract poem from full API response
+    poem = completion.choices[0].message.content
+
+  except Exception as e:
+    error_message = str(e)
+    print("Error during poem generation: ", error_message)
+    print_poem(f"Alas, something went wrong.\n\n.Technical details:\n Error while writing poem. {error_message}")
+    print_poem("\n\nTroubleshooting:")
+    print_poem("1. Check your wifi connection.")
+    print_poem("2. Try restarting the camera by holding the shutter button for 3 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
+    print_poem("3. You may just need to wait a bit and it will pass.")
+    print_footer()
+    led.on()
+    camera_at_rest = True
+    return
+
+
+  # for debugging prompts
   print('-------- BLIP + GPT4 POEM BELOW-------')
   print(poem)
   print('------------------')
