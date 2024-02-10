@@ -4,7 +4,7 @@
 # Capture a JPEG while still running in the preview mode. When you
 # capture to a file, the return value is the metadata for that image.
 
-import time, requests, signal, os, replicate, base64
+import requests, signal, os, replicate, base64
 
 from picamera2 import Picamera2, Preview
 from gpiozero import LED, Button
@@ -13,6 +13,8 @@ from wraptext import *
 from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAI
+from time import time, sleep
+
 
 #load API keys from .env
 load_dotenv()
@@ -27,15 +29,16 @@ printer = Adafruit_Thermal('/dev/serial0', baud_rate, timeout=5)
 picam2 = Picamera2()
 # start camera
 picam2.start()
-time.sleep(2) # warmup period since first few frames are often poor quality
+sleep(2) # warmup period since first few frames are often poor quality
 
 #instantiate buttons
-shutter_button = Button(16) # REPLACE WTH YOUR OWN BUTTON PINS
+shutter_button = Button(16)
 led = LED(26)
+led.on()
 
 # prevent double-click bugs by checking whether the camera is resting
 # (i.e. not in the middle of the whole photo-to-poem process):
-is_resting = True
+camera_at_rest = True
 
 # prompts
 system_prompt = """You are a poet. You specialize in elegant and emotionally impactful poems. 
@@ -59,11 +62,12 @@ poem_format = "8 line free verse"
 #############################
 def take_photo_and_print_poem():
   # prevent double-clicks by indicating camera is active
-  global is_resting
-  is_resting = False
+  global camera_at_rest
+  camera_at_rest = False
 
   # blink LED in a background thread
-  led.blink()
+  #led.blink()
+  led.off()
 
   # Take photo & save it
   metadata = picam2.capture_file('/home/carolynz/CamTest/images/image.jpg')
@@ -166,10 +170,10 @@ def take_photo_and_print_poem():
   print_poem(gpt4v_poem)
   print_footer()
   """
-  led.off()
+  led.on()
 
   # camera back at rest, available to listen to button clicks again
-  is_resting = True
+  camera_at_rest = True
 
   return
 
@@ -260,9 +264,15 @@ def print_footer():
 # POWER BUTTON
 ##############
 def shutdown():
-  print('shutdown button held for 2s')
-  print('shutting down now')
-  led.off()
+  print('shutting down...')
+
+  # blink LED before shutting down
+  for _ in range(5):
+    led.on()
+    sleep(0.25)
+    led.off()
+    sleep(0.25)
+
   os.system('sudo shutdown -h now')
 
 ################################
@@ -283,25 +293,41 @@ signal.signal(signal.SIGINT, handle_keyboard_interrupt)
 #################
 # Button handlers
 #################
-def handle_pressed():
-  global is_resting
-  if is_resting:
-    led.on()
-    led.off()
-    print("button pressed!")
-    take_photo_and_print_poem()
-  else:
-    print("shutter click ignored while camera is printing")
 
-def handle_held():
-  print("button held!")
-  shutdown()
+def on_press():
+  # track when button was pressed
+  global press_time
+  press_time = time()
 
+  led.off()
+
+
+def on_release():
+  # calculate how long button was pressed
+  global press_time
+  release_time = time()
+
+  led.on()
+
+  duration = release_time - press_time
+
+  # if user clicked button
+  # the > 0.05 check is to make sure we aren't accidentally capturing contact bounces
+  # https://www.allaboutcircuits.com/textbook/digital/chpt-4/contact-bounce/
+  if duration > 0.05 and duration < 2:
+    if camera_at_rest:
+      take_photo_and_print_poem()
+    else:
+      print("ignoring double click while poem is printing")
+  elif duration > 2: #if user held button
+    shutdown()
 
 ################################
 # LISTEN FOR BUTTON PRESS EVENTS
 ################################
-shutter_button.when_pressed = take_photo_and_print_poem
-#power_button.when_held = shutdown
+shutter_button.when_pressed = on_press
+shutter_button.when_released = on_release
 
+
+#keeps script alive so the camera functionality keeps running
 signal.pause()
