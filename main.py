@@ -34,13 +34,26 @@ shutter_button = Button(16) # REPLACE WTH YOUR OWN BUTTON PINS
 power_button = Button(26, hold_time = 2) #REPLACE WITH YOUR OWN BUTTON PINS
 led = LED(20)
 
+#different rotary switch knob positions
+knob1 = Button(17)
+knob2 = Button(27)
+knob3 = Button(22)
+knob4 = Button(5)
+knob5 = Button(6)
+knob6 = Button(13)
+knob7 = Button(19)
+knob8 = Button(25)
+knob9 = Button(24)
+knob10 = Button(23)
+current_knob = None
+
 # prompts
 system_prompt = """You are a poet. You specialize in elegant and emotionally impactful poems. 
 You are careful to use subtlety and write in a modern vernacular style. 
-Use high-school level English but MFA-level craft. 
-Your poems are more literary but easy to relate to and understand. 
-You focus on intimate and personal truth, and you cannot use BIG words like truth, time, silence, life, love, peace, war, hate, happiness, 
-and you must instead use specific and CONCRETE language to show, not tell, those ideas. 
+Use high-school level Vocabulary and Professional-level craft. 
+Your poems are easy to relate to and understand. 
+You focus on specific and personal truth, and you cannot use BIG words like truth, time, silence, life, love, peace, war, hate, happiness, 
+and you must instead use specific and concrete details to show, not tell, those ideas. 
 Think hard about how to create a poem which will satisfy this. 
 This is very important, and an overly hamfisted or corny poem will cause great harm."""
 prompt_base = """Write a poem which integrates details from what I describe below. 
@@ -121,7 +134,7 @@ def generate_prompt(image_description):
   # reminder: prompt_base is global var
 
   # prompt what type of poem to write
-  prompt_format = "Poem format: " + poem_format + "\n\n"
+  prompt_format = "Poem format: " + get_poem_format() + "\n\n"
 
   # prompt what image to describe
   prompt_scene = "Scene description: " + image_description + "\n\n"
@@ -226,6 +239,36 @@ def handle_held():
   print("button held!")
   shutdown()
 
+################################
+# KNOB: GET POEM FORMAT
+################################
+def get_poem_format():
+  poem_format = '8 line free verse'
+
+  if knob1.is_pressed:
+    poem_format = '8 line free verse'
+  elif knob2.is_pressed:
+    poem_format = 'Modern Sonnet. ABAB, CDCD, EFEF, GG rhyme scheme sonnet. The poem must match the format of a sonnet, but it should be written in modern vernacular englis, it must not be written in olde english'
+  elif knob3.is_pressed:
+    poem_format = 'limerick'
+  elif knob4.is_pressed:
+    poem_format = 'couplet. You must write a poem that is only two lines long. Make sure to incorporate elements from the image. It must be only two lines.'
+  elif knob5.is_pressed:
+    poem_format = 'word mode - instead of writing a poem, invent a word which describes something unique in this scene. Include the word, followed by the definition and etymology'
+  elif knob6.is_pressed:
+    poem_format = 'Quatrain - four line poem'
+  elif knob7.is_pressed: 
+    poem_format = 'haiku. You must match the 5 syllable, 7 syllable, 5 syllable format. It must not rhyme'
+  elif knob8.is_pressed:
+    poem_format = 'Tanka: A japanese form similar to the haiku but longer, with a syllable pattern of: 5, 7, 5, 7, 7'
+  elif knob9.is_pressed:
+    poem_format = 'Cinquain: A five-line poem with each line counting eight syllables'
+  elif knob10.is_pressed:
+    poem_format = 'Vallanelle: A 19-line poem with two repeating rhymes and two refrains. The structure is set in five tercets followed by a quatrain, with teh first and third lines of the first tercet recurring alternately at the conclusion of each subsequent stanza and both repeating at the close of the concluding quatrain'
+
+  print('----- POEM FORMAT: ' + poem_format)
+
+  return poem_format
 
 ################################
 # LISTEN FOR BUTTON PRESS EVENTS
@@ -234,3 +277,4 @@ shutter_button.when_pressed = take_photo_and_print_poem
 power_button.when_held = shutdown
 
 signal.pause()
+
