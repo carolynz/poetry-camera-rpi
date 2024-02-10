@@ -31,11 +31,8 @@ time.sleep(2) # warmup period since first few frames are often poor quality
 
 #instantiate buttons
 shutter_button = Button(16) # REPLACE WTH YOUR OWN BUTTON PINS
-led = LED(26)
-
-# prevent double-click bugs by checking whether the camera is resting
-# (i.e. not in the middle of the whole photo-to-poem process):
-is_resting = True
+power_button = Button(26, hold_time = 2) #REPLACE WITH YOUR OWN BUTTON PINS
+led = LED(20)
 
 # prompts
 system_prompt = """You are a poet. You specialize in elegant and emotionally impactful poems. 
@@ -51,17 +48,22 @@ Use the specified poem format. The references to the source material must be sub
 Create a unique and elegant poem and use specific ideas and details.
 You must keep vocabulary simple and use understated point of view. 
 Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.\n\n"""
-poem_format = "8 line free verse"
+poem_format = "8 line free verse, all lowercase"
+
+
+
+prompt_gpt4_caption = """What is happening in the image? What emotions might the subject be experiencing?"""
+prompt_gpt4_twoshot_base = """Write a poem using details from the provided imag. Focus on the atmosphere and emotion of the scene.
+Use the specified poem format. The references to the source material must be subtle yet clear. 
+Create a unique and elegant poem and use specific ideas and details.
+You must keep vocabulary simple and use understated point of view. 
+Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.\n\n"""
 
 
 #############################
 # CORE PHOTO-TO-POEM FUNCTION
 #############################
 def take_photo_and_print_poem():
-  # prevent double-clicks by indicating camera is active
-  global is_resting
-  is_resting = False
-
   # blink LED in a background thread
   led.blink()
 
@@ -113,11 +115,11 @@ def take_photo_and_print_poem():
   print(poem)
   print('------------------')
 
+  print_poem('***BLIP-2 caption + GPT4 poem***')
   print_poem(poem)
 
   print_footer()
 
-  """
   #FOR TESTING ONLY: gpt-4-vision comparison
   print_header()
   base64_image = encode_image("/home/carolynz/CamTest/images/image.jpg")
@@ -162,14 +164,11 @@ def take_photo_and_print_poem():
   print('-------- GPT4V POEM BELOW-------')
   print(gpt4v_poem)
   print('------------------')
-
+  print_poem('***GPT4 Vision one-shot***')
   print_poem(gpt4v_poem)
   print_footer()
-  """
-  led.off()
 
-  # camera back at rest, available to listen to button clicks again
-  is_resting = True
+  led.off()
 
   return
 
@@ -284,14 +283,10 @@ signal.signal(signal.SIGINT, handle_keyboard_interrupt)
 # Button handlers
 #################
 def handle_pressed():
-  global is_resting
-  if is_resting:
-    led.on()
-    led.off()
-    print("button pressed!")
-    take_photo_and_print_poem()
-  else:
-    print("shutter click ignored while camera is printing")
+  led.on()
+  led.off()
+  print("button pressed!")
+  take_photo_and_print_poem()
 
 def handle_held():
   print("button held!")
@@ -302,6 +297,6 @@ def handle_held():
 # LISTEN FOR BUTTON PRESS EVENTS
 ################################
 shutter_button.when_pressed = take_photo_and_print_poem
-#power_button.when_held = shutdown
+power_button.when_held = shutdown
 
 signal.pause()
