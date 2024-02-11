@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# test comment
 
 # Capture a JPEG while still running in the preview mode. When you
 # capture to a file, the return value is the metadata for that image.
