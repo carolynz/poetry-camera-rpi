@@ -1,10 +1,10 @@
+# takeFrom picamera2 examples: capture_jpeg.py 
 #!/usr/bin/python3
-# test comment
 
 # Capture a JPEG while still running in the preview mode. When you
 # capture to a file, the return value is the metadata for that image.
 
-import requests, signal, os, replicate, base64
+import time, requests, signal, os, replicate, base64
 
 from picamera2 import Picamera2, Preview
 from gpiozero import LED, Button
@@ -13,8 +13,6 @@ from wraptext import *
 from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAI
-from time import time, sleep
-
 
 #load API keys from .env
 load_dotenv()
@@ -29,35 +27,20 @@ printer = Adafruit_Thermal('/dev/serial0', baud_rate, timeout=5)
 picam2 = Picamera2()
 # start camera
 picam2.start()
-sleep(2) # warmup period since first few frames are often poor quality
+time.sleep(2) # warmup period since first few frames are often poor quality
 
 #instantiate buttons
-shutter_button = Button(16)
-led = LED(26)
-led.on()
-
-# prevent double-click bugs by checking whether the camera is resting
-# (i.e. not in the middle of the whole photo-to-poem process):
-camera_at_rest = True
-
-#different rotary switch knob positions
-knob1 = Button(17)
-knob2 = Button(27)
-knob3 = Button(22)
-knob4 = Button(5)
-knob5 = Button(6)
-knob6 = Button(13)
-knob7 = Button(19)
-knob8 = Button(25)
-current_knob = None
+shutter_button = Button(16) # REPLACE WTH YOUR OWN BUTTON PINS
+power_button = Button(26, hold_time = 2) #REPLACE WITH YOUR OWN BUTTON PINS
+led = LED(20)
 
 # prompts
 system_prompt = """You are a poet. You specialize in elegant and emotionally impactful poems. 
 You are careful to use subtlety and write in a modern vernacular style. 
-Use high-school level Vocabulary and Professional-level craft. 
-Your poems are easy to relate to and understand. 
-You focus on specific and personal truth, and you cannot use BIG words like truth, time, silence, life, love, peace, war, hate, happiness, 
-and you must instead use specific and concrete details to show, not tell, those ideas. 
+Use high-school level English but MFA-level craft. 
+Your poems are more literary but easy to relate to and understand. 
+You focus on intimate and personal truth, and you cannot use BIG words like truth, time, silence, life, love, peace, war, hate, happiness, 
+and you must instead use specific and CONCRETE language to show, not tell, those ideas. 
 Think hard about how to create a poem which will satisfy this. 
 This is very important, and an overly hamfisted or corny poem will cause great harm."""
 prompt_base = """Write a poem using details from the provided image. Focus on the atmosphere and emotion of the scene.
@@ -65,20 +48,24 @@ Use the specified poem format. The references to the source material must be sub
 Create a unique and elegant poem and use specific ideas and details.
 You must keep vocabulary simple and use understated point of view. 
 Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.\n\n"""
-poem_format = "8 line free verse"
+poem_format = "8 line free verse, all lowercase"
+
+
+
+prompt_gpt4_caption = """What is happening in the image? What emotions might the subject be experiencing?"""
+prompt_gpt4_twoshot_base = """Write a poem using details from the provided imag. Focus on the atmosphere and emotion of the scene.
+Use the specified poem format. The references to the source material must be subtle yet clear. 
+Create a unique and elegant poem and use specific ideas and details.
+You must keep vocabulary simple and use understated point of view. 
+Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.\n\n"""
 
 
 #############################
 # CORE PHOTO-TO-POEM FUNCTION
 #############################
 def take_photo_and_print_poem():
-  # prevent double-clicks by indicating camera is active
-  global camera_at_rest
-  camera_at_rest = False
-
   # blink LED in a background thread
-  #led.blink()
-  led.off()
+  led.blink()
 
   # Take photo & save it
   metadata = picam2.capture_file('/home/carolynz/CamTest/images/image.jpg')
@@ -97,81 +84,42 @@ def take_photo_and_print_poem():
   #########################
   # Send saved image to API
   #########################
-  """
+
   image_caption = replicate.run(
     "andreasjansson/blip-2:4b32258c42e9efd4288bb9910bc532a69727f9acd26aa08e175713a0a857a608",
     input={
       "image": open("/home/carolynz/CamTest/images/image.jpg", "rb"),
       "caption": True,
     })
-  """
-  try:
-    # Send saved image to API
-    with open("/home/carolynz/CamTest/images/image.jpg", "rb") as image_file:
-      image_caption = replicate.run(
-        "andreasjansson/blip-2:4b32258c42e9efd4288bb9910bc532a69727f9acd26aa08e175713a0a857a608",
-          input={
-            "image": image_file,
-            "caption": True,
-          })
 
-    print('caption: ', image_caption)
+  print('caption: ', image_caption)
+  # generate our prompt for GPT
+  prompt = generate_prompt(image_caption)
 
-    # Generate our prompt for GPT
-    prompt = generate_prompt(image_caption)
+  # Feed prompt to ChatGPT, to create the poem
+  completion = openai_client.chat.completions.create(
+    model="gpt-4",
+    messages=[{
+      "role": "system",
+      "content": system_prompt
+    }, {
+      "role": "user",
+      "content": prompt
+    }])
 
-  except Exception as e:
-    error_message = str(e)
-    print("Error during image captioning: ", error_message)
-    print_poem(f"Alas, something went wrong.\n\nTechnical details:\n Error while recognizing image. {error_message}")
-    print_poem("\n\nTroubleshooting:")
-    print_poem("1. Check your wifi connection.")
-    print_poem("2. Try restarting the camera by holding the shutter button for 3 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
-    print_poem("3. You may just need to wait a bit and it will pass.")
-    print_footer()
-    led.on()
-    camera_at_rest = True
-    return
+  # extract poem from full API response
+  poem = completion.choices[0].message.content
 
-  try:
-    # Feed prompt to ChatGPT, to create the poem
-    completion = openai_client.chat.completions.create(
-      model="gpt-4",
-      messages=[{
-        "role": "system",
-        "content": system_prompt
-      }, {
-        "role": "user",
-        "content": prompt
-      }])
-
-    # extract poem from full API response
-    poem = completion.choices[0].message.content
-
-  except Exception as e:
-    error_message = str(e)
-    print("Error during poem generation: ", error_message)
-    print_poem(f"Alas, something went wrong.\n\n.Technical details:\n Error while writing poem. {error_message}")
-    print_poem("\n\nTroubleshooting:")
-    print_poem("1. Check your wifi connection.")
-    print_poem("2. Try restarting the camera by holding the shutter button for 3 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
-    print_poem("3. You may just need to wait a bit and it will pass.")
-    print_footer()
-    led.on()
-    camera_at_rest = True
-    return
-
-
-  # for debugging prompts
+  # print for debugging
   print('-------- BLIP + GPT4 POEM BELOW-------')
   print(poem)
   print('------------------')
 
+  print_poem('***BLIP-2 caption + GPT4 poem***')
   print_poem(poem)
 
   print_footer()
 
-  """
   #FOR TESTING ONLY: gpt-4-vision comparison
   print_header()
   base64_image = encode_image("/home/carolynz/CamTest/images/image.jpg")
@@ -216,14 +164,11 @@ def take_photo_and_print_poem():
   print('-------- GPT4V POEM BELOW-------')
   print(gpt4v_poem)
   print('------------------')
-
+  print_poem('***GPT4 Vision one-shot***')
   print_poem(gpt4v_poem)
   print_footer()
-  """
-  led.on()
 
-  # camera back at rest, available to listen to button clicks again
-  camera_at_rest = True
+  led.off()
 
   return
 
@@ -242,7 +187,7 @@ def generate_prompt(image_description):
   # reminder: prompt_base is global var
 
   # prompt what type of poem to write
-  prompt_format = "Poem format: " + get_poem_format() + "\n\n"
+  prompt_format = "Poem format: " + poem_format + "\n\n"
 
   # prompt what image to describe
   prompt_scene = "Scene description: " + image_description + "\n\n"
@@ -314,15 +259,9 @@ def print_footer():
 # POWER BUTTON
 ##############
 def shutdown():
-  print('shutting down...')
-
-  # blink LED before shutting down
-  for _ in range(5):
-    led.on()
-    sleep(0.25)
-    led.off()
-    sleep(0.25)
-
+  print('shutdown button held for 2s')
+  print('shutting down now')
+  led.off()
   os.system('sudo shutdown -h now')
 
 ################################
@@ -343,71 +282,21 @@ signal.signal(signal.SIGINT, handle_keyboard_interrupt)
 #################
 # Button handlers
 #################
-
-def on_press():
-  # track when button was pressed
-  global press_time
-  press_time = time()
-
-  led.off()
-
-def on_release():
-  # calculate how long button was pressed
-  global press_time
-  release_time = time()
-
+def handle_pressed():
   led.on()
+  led.off()
+  print("button pressed!")
+  take_photo_and_print_poem()
 
-  duration = release_time - press_time
-
-  # if user clicked button
-  # the > 0.05 check is to make sure we aren't accidentally capturing contact bounces
-  # https://www.allaboutcircuits.com/textbook/digital/chpt-4/contact-bounce/
-  if duration > 0.05 and duration < 2:
-    if camera_at_rest:
-      take_photo_and_print_poem()
-    else:
-      print("ignoring double click while poem is printing")
-  elif duration > 2: #if user held button
-    shutdown()
+def handle_held():
+  print("button held!")
+  shutdown()
 
 
 ################################
-# KNOB: GET POEM FORMAT
-################################
-def get_poem_format():
-  poem_format = '8 line free verse'
-
-  if knob1.is_pressed:
-    poem_format = '8 line free verse'
-  elif knob2.is_pressed:
-    poem_format = 'Modern Sonnet. ABAB, CDCD, EFEF, GG rhyme scheme sonnet. The poem must match the format of a sonnet, but it should be written in modern vernacular englis, it must not be written in olde english'
-  elif knob3.is_pressed: 
-    poem_format = 'limerick'
-  elif knob4.is_pressed:
-    poem_format = 'couplet. You must write a poem that is only two lines long. Make sure to incorporate elements from the image. It must be only two lines.'
-  elif knob5.is_pressed:
-    # poem_format = 'word mode - instead of writing a poem, invent a word which describes something unique in this scene. Include the word, followed by the definition and etymology'
-    poem_format = 'poem where each word begins with the same letter. It must be four lines or less.'
-  elif knob6.is_pressed:
-    poem_format = 'Quatrain - four line poem'
-  elif knob7.is_pressed:
-    poem_format = 'haiku. You must match the 5 syllable, 7 syllable, 5 syllable format. It must not rhyme'
-  elif knob8.is_pressed:
-    poem_format = 'Tanka: A japanese form similar to the haiku but longer, with a syllable pattern of: 5, 7, 5, 7, 7'
-  else:
-    poem_format = 'limerick'
-  print('----- POEM FORMAT: ' + poem_format)
-
-  return poem_format
-
-###############################
 # LISTEN FOR BUTTON PRESS EVENTS
 ################################
-shutter_button.when_pressed = on_press
-shutter_button.when_released = on_release
+shutter_button.when_pressed = take_photo_and_print_poem
+power_button.when_held = shutdown
 
-
-#keeps script alive so the camera functionality keeps running
 signal.pause()
-
