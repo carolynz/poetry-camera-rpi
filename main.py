@@ -77,8 +77,8 @@ def take_photo_and_print_poem():
   camera_at_rest = False
 
   # blink LED in a background thread
-  #led.blink()
-  led.off()
+  led.blink()
+  # led.off()
 
   # Take photo & save it
   metadata = picam2.capture_file('/home/carolynz/CamTest/images/image.jpg')
