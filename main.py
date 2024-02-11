@@ -1,4 +1,3 @@
-# takeFrom picamera2 examples: capture_jpeg.py 
 #!/usr/bin/python3
 
 # Capture a JPEG while still running in the preview mode. When you
