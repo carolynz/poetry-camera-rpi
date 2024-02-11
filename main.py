@@ -383,7 +383,7 @@ def get_poem_format():
   elif knob2.is_pressed:
     poem_format = 'Modern Sonnet. ABAB, CDCD, EFEF, GG rhyme scheme sonnet. The poem must match the format of a sonnet, but it should be written in modern vernacular englis, it must not be written in olde english'
   elif knob3.is_pressed: 
-    poem_format = 'limerick'
+    poem_format = 'limerick. It must only be 5 lines.'
   elif knob4.is_pressed:
     poem_format = 'couplet. You must write a poem that is only two lines long. Make sure to incorporate elements from the image. It must be only two lines.'
   elif knob5.is_pressed:
@@ -396,7 +396,7 @@ def get_poem_format():
   elif knob8.is_pressed:
     poem_format = 'Tanka: A japanese form similar to the haiku but longer, with a syllable pattern of: 5, 7, 5, 7, 7'
   else:
-    poem_format = 'limerick'
+    poem_format = 'limerick. It must only be 5 lines.'
   print('----- POEM FORMAT: ' + poem_format)
 
   return poem_format
