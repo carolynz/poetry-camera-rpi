@@ -368,7 +368,7 @@ def on_release():
       take_photo_and_print_poem()
     else:
       print("ignoring double click while poem is printing")
-  elif duration > 2: #if user held button
+  elif duration > 9: #if user held button
     shutdown()
 
 
