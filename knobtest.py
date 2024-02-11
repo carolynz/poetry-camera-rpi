@@ -43,4 +43,4 @@ while True:
     print("switch 10 is selected")
 
   else:
-    print("some other state")
+    print("switch 3 is selected") #mechanical issue on switch 3

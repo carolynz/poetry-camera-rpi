@@ -43,8 +43,6 @@ knob5 = Button(6)
 knob6 = Button(13)
 knob7 = Button(19)
 knob8 = Button(25)
-knob9 = Button(24)
-knob10 = Button(23)
 current_knob = None
 
 # prompts
@@ -249,7 +247,7 @@ def get_poem_format():
     poem_format = '8 line free verse'
   elif knob2.is_pressed:
     poem_format = 'Modern Sonnet. ABAB, CDCD, EFEF, GG rhyme scheme sonnet. The poem must match the format of a sonnet, but it should be written in modern vernacular englis, it must not be written in olde english'
-  elif knob3.is_pressed:
+  elif knob3.is_pressed: 
     poem_format = 'limerick'
   elif knob4.is_pressed:
     poem_format = 'couplet. You must write a poem that is only two lines long. Make sure to incorporate elements from the image. It must be only two lines.'
@@ -261,16 +259,13 @@ def get_poem_format():
     poem_format = 'haiku. You must match the 5 syllable, 7 syllable, 5 syllable format. It must not rhyme'
   elif knob8.is_pressed:
     poem_format = 'Tanka: A japanese form similar to the haiku but longer, with a syllable pattern of: 5, 7, 5, 7, 7'
-  elif knob9.is_pressed:
-    poem_format = 'Cinquain: A five-line poem with each line counting eight syllables'
-  elif knob10.is_pressed:
-    poem_format = 'Vallanelle: A 19-line poem with two repeating rhymes and two refrains. The structure is set in five tercets followed by a quatrain, with teh first and third lines of the first tercet recurring alternately at the conclusion of each subsequent stanza and both repeating at the close of the concluding quatrain'
-
+  else:
+    poem_format = 'limerick' 
   print('----- POEM FORMAT: ' + poem_format)
 
   return poem_format
 
-################################
+###############################
 # LISTEN FOR BUTTON PRESS EVENTS
 ################################
 shutter_button.when_pressed = take_photo_and_print_poem
