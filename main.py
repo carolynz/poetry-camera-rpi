@@ -41,7 +41,6 @@ led.on()
 camera_at_rest = True
 
 #different rotary switch knob positions
-
 knob1 = Button(17)
 knob2 = Button(27)
 knob3 = Button(22)
