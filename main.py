@@ -61,7 +61,8 @@ and you must instead use specific and concrete details to show, not tell, those 
 Think hard about how to create a poem which will satisfy this. 
 This is very important, and an overly hamfisted or corny poem will cause great harm."""
 prompt_base = """Write a poem using the details, atmosphere, and emotion of this scene. Create a unique and elegant poem using specific details from the scene.
-Use the specified poem format. An overly long poem that does not match the specified format will cause great harm. 
+Make sure to use the specified poem format. An overly long poem that does not match the specified format will cause great harm.
+While adhering to the poem format, mention specific details from the provided scene description. The references to the source material must be clear.
 Try to match the vibe of the described scene to the style of the poem (e.g. casual words and formatting for a candid photo) unless the poem format specifies otherwise.
 You do not need to mention the time unless it makes for a better poem.
 Don't use the words 'unspoken' or 'unseen'. Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.\n\n"""
@@ -83,8 +84,8 @@ def take_photo_and_print_poem():
   camera_at_rest = False
 
   # blink LED in a background thread
-  #led.blink()
-  led.off()
+  led.blink()
+  #led.off()
 
   # Take photo & save it
   metadata = picam2.capture_file('/home/carolynz/CamTest/images/image.jpg')
