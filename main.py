@@ -4,7 +4,7 @@
 # Capture a JPEG while still running in the preview mode. When you
 # capture to a file, the return value is the metadata for that image.
 
-import requests, signal, os, replicate, base64
+import requests, signal, os, base64
 
 from picamera2 import Picamera2, Preview
 from gpiozero import LED, Button
@@ -19,7 +19,7 @@ from time import time, sleep
 #load API keys from .env
 load_dotenv()
 openai_client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
-REPLICATE_API_TOKEN = os.environ['REPLICATE_API_TOKEN']
+#REPLICATE_API_TOKEN = os.environ['REPLICATE_API_TOKEN']
 
 #instantiate printer
 baud_rate = 9600 # REPLACE WITH YOUR OWN BAUD RATE
@@ -51,7 +51,7 @@ knob7 = Button(19)
 knob8 = Button(25)
 current_knob = None
 
-# prompts
+# poem prompts
 system_prompt = """You are a poet. You specialize in elegant and emotionally impactful poems. 
 You are careful to use subtlety and write in a modern vernacular style. 
 Use high-school level Vocabulary and Professional-level craft. 
@@ -60,12 +60,19 @@ You focus on specific and personal truth, and you cannot use BIG words like trut
 and you must instead use specific and concrete details to show, not tell, those ideas. 
 Think hard about how to create a poem which will satisfy this. 
 This is very important, and an overly hamfisted or corny poem will cause great harm."""
-prompt_base = """Write a poem using details from the provided image. Focus on the atmosphere and emotion of the scene.
-Use the specified poem format. The references to the source material must be subtle yet clear. 
-Create a unique and elegant poem and use specific ideas and details.
-You must keep vocabulary simple and use understated point of view. 
-Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.\n\n"""
-poem_format = "8 line free verse"
+prompt_base = """Write a poem using the details, atmosphere, and emotion of this scene. Create a unique and elegant poem using specific details from the scene.
+Make sure to use the specified poem format. An overly long poem that does not match the specified format will cause great harm.
+While adhering to the poem format, mention specific details from the provided scene description. The references to the source material must be clear.
+Try to match the vibe of the described scene to the style of the poem (e.g. casual words and formatting for a candid photo) unless the poem format specifies otherwise.
+You do not need to mention the time unless it makes for a better poem.
+Don't use the words 'unspoken' or 'unseen'. Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.\n\n"""
+#poem_format = "4 line free verse"
+# ^ poem format now set via get_poem_format() below
+
+# gpt4v captioner prompts for 2-shot gpt4v
+captioner_system_prompt = "You are an image captioner. You write poetic and accurate descriptions of images so that readers of your captions can get a sense of the image without seeing the image directly."
+captioner_prompt = "Describe what is happening in this image. What is the subject of this image? Are there any people in it? What do they look like and what are they doing? What is the setting? What time of day or year is it, if you can tell? Are there any other notable features of the image? What emotions might this image evoke? Be concise, no yapping."
+
 
 
 #############################
@@ -78,7 +85,6 @@ def take_photo_and_print_poem():
 
   # blink LED in a background thread
   led.blink()
-  # led.off()
 
   # Take photo & save it
   metadata = picam2.capture_file('/home/carolynz/CamTest/images/image.jpg')
@@ -97,16 +103,9 @@ def take_photo_and_print_poem():
   #########################
   # Send saved image to API
   #########################
-  """
-  image_caption = replicate.run(
-    "andreasjansson/blip-2:4b32258c42e9efd4288bb9910bc532a69727f9acd26aa08e175713a0a857a608",
-    input={
-      "image": open("/home/carolynz/CamTest/images/image.jpg", "rb"),
-      "caption": True,
-    })
-  """
   try:
     # Send saved image to API
+    """
     with open("/home/carolynz/CamTest/images/image.jpg", "rb") as image_file:
       image_caption = replicate.run(
         "andreasjansson/blip-2:4b32258c42e9efd4288bb9910bc532a69727f9acd26aa08e175713a0a857a608",
@@ -116,6 +115,46 @@ def take_photo_and_print_poem():
           })
 
     print('caption: ', image_caption)
+    """
+
+    base64_image = encode_image("/home/carolynz/CamTest/images/image.jpg")
+
+    api_key = os.environ['OPENAI_API_KEY']
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}"
+    }
+
+    payload = {
+      "model": "gpt-4-vision-preview",
+      "messages": [
+        {
+          "role": "system",
+          "content": captioner_system_prompt
+        },
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": captioner_prompt,
+            },
+            {
+              "type": "image_url",
+              "image_url": {
+                "url": f"data:image/jpeg;base64,{base64_image}"
+              }
+            }
+          ]
+        }
+      ],
+      "max_tokens": 300
+    }
+
+    gpt4v_response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+    gpt4v_data = gpt4v_response.json()
+    image_caption = gpt4v_data['choices'][0]['message']['content']
+    print("gpt4v image caption:", image_caption)
 
     # Generate our prompt for GPT
     prompt = generate_prompt(image_caption)
@@ -163,7 +202,7 @@ def take_photo_and_print_poem():
 
 
   # for debugging prompts
-  print('-------- BLIP + GPT4 POEM BELOW-------')
+  print('------ POEM ------')
   print(poem)
   print('------------------')
 
@@ -171,55 +210,6 @@ def take_photo_and_print_poem():
 
   print_footer()
 
-  """
-  #FOR TESTING ONLY: gpt-4-vision comparison
-  print_header()
-  base64_image = encode_image("/home/carolynz/CamTest/images/image.jpg")
-
-  api_key = os.environ['OPENAI_API_KEY']
-  headers = {
-      "Content-Type": "application/json",
-      "Authorization": f"Bearer {api_key}"
-  }
-
-  payload = {
-    "model": "gpt-4-vision-preview",
-    "messages": [
-      {
-        "role": "system",
-        "content": system_prompt
-      },
-      {
-        "role": "user",
-        "content": [
-          {
-            "type": "text",
-            "text": prompt,
-          },
-          {
-            "type": "image_url",
-            "image_url": {
-              "url": f"data:image/jpeg;base64,{base64_image}"
-            }
-          }
-        ]
-      }
-    ],
-    "max_tokens": 300
-  }
-
-  gpt4v_response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-  gpt4v_data = gpt4v_response.json()
-  gpt4v_poem = gpt4v_data['choices'][0]['message']['content']
-
-  # print for debugging
-  print('-------- GPT4V POEM BELOW-------')
-  print(gpt4v_poem)
-  print('------------------')
-
-  print_poem(gpt4v_poem)
-  print_footer()
-  """
   led.on()
 
   # camera back at rest, available to listen to button clicks again
@@ -247,8 +237,12 @@ def generate_prompt(image_description):
   # prompt what image to describe
   prompt_scene = "Scene description: " + image_description + "\n\n"
 
+  # time
+  formatted_time = datetime.now().strftime("%H:%M on %B %d, %Y")
+  prompt_time = "Scene date and time: " + formatted_time + "\n\n"
+
   # stitch together full prompt
-  prompt = prompt_base + prompt_format + prompt_scene
+  prompt = prompt_base + prompt_format + prompt_scene + prompt_time
 
   # idk how to remove the brackets and quotes from the prompt
   # via custom filters so i'm gonna remove via this janky code lol
@@ -303,7 +297,9 @@ def print_footer():
   printer.println("   .     .     .     .     .   ")
   printer.println("_.` `._.` `._.` `._.` `._.` `._")
   printer.println('\n')
-  printer.println('poetry camera x whitebox')
+  printer.println('poetry camera')
+  printer.println('@ human-assisted art:')
+  printer.println('renaissance')
   printer.println()
   printer.println('explore the archives at')
   printer.println('poetry.camera')
@@ -376,13 +372,13 @@ def on_release():
 # KNOB: GET POEM FORMAT
 ################################
 def get_poem_format():
-  poem_format = '8 line free verse'
+  poem_format = '4 line free verse'
 
   if knob1.is_pressed:
-    poem_format = '8 line free verse'
+    poem_format = '4 line free verse'
   elif knob2.is_pressed:
     poem_format = 'Modern Sonnet. ABAB, CDCD, EFEF, GG rhyme scheme sonnet. The poem must match the format of a sonnet, but it should be written in modern vernacular englis, it must not be written in olde english'
-  elif knob3.is_pressed: 
+  elif knob3.is_pressed:
     poem_format = 'limerick. It must only be 5 lines.'
   elif knob4.is_pressed:
     poem_format = 'couplet. You must write a poem that is only two lines long. Make sure to incorporate elements from the image. It must be only two lines.'
