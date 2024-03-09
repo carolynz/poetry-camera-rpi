@@ -4,9 +4,10 @@
 # Capture a JPEG while still running in the preview mode. When you
 # capture to a file, the return value is the metadata for that image.
 
-import requests, signal, os, replicate, base64
+import requests, signal, os, base64
 
 from picamera2 import Picamera2, Preview
+from libcamera import controls
 from gpiozero import LED, Button
 from Adafruit_Thermal import *
 from wraptext import *
@@ -27,9 +28,15 @@ printer = Adafruit_Thermal('/dev/serial0', baud_rate, timeout=5)
 
 #instantiate camera
 picam2 = Picamera2()
+#config = picam2.create_preview_configuration()
+#picam2.configure(config)
 # start camera
+# picam2.start(show_preview = True)
+# sleep(2) #warmup period since first few frames are often poor quality
+#picam2.set_controls({"AfMode": controls.AfModeEnum.Continuous, "AfSpeed": controls.AfSpeedEnum.Fast})
+
 picam2.start()
-sleep(2) # warmup period since first few frames are often poor quality
+sleep(2)
 
 #instantiate buttons
 shutter_button = Button(16)
@@ -70,7 +77,8 @@ Don't use the words 'unspoken' or 'unseen'. Do not be corny or cliche'd or use g
 # ^ poem format now set via get_poem_format() below
 
 # gpt4v captioner prompts for 2-shot gpt4v
-captioner_system_prompt = "You are an image captioner. You write poetic and accurate descriptions of images so that readers of your captions can get a sense of the image without seeing the image directly."
+captioner_system_prompt = "You are an image captioner. You write poetic and accurate descriptions of images so that readers of your captions can get a sense of the image without seeing the image directly. DO NOT mention blurring or out of focus images, just give your best guess as to what is happening."
+#captioner_system_prompt = "You are an image captioner. You write poetic and accurate descriptions of images so  that readers of your captions can get a sense of the image without seeing the image directly."
 captioner_prompt = "Describe what is happening in this image. What is the subject of this image? Are there any people in it? What do they look like and what are they doing? What is the setting? What time of day or year is it, if you can tell? Are there any other notable features of the image? What emotions might this image evoke? Be concise, no yapping."
 
 
@@ -87,8 +95,14 @@ def take_photo_and_print_poem():
   led.blink()
   #led.off()
 
+  # FOR DEBUGGING: filename
+  timestamp = datetime.now.strftime('%Y-%m-%d_%H-%M-%S')
+  directory = '/home/carolynz/CamTest/images/'
+  photo_filename = directory + 'image_' + timestamp + '.jpg'
+
   # Take photo & save it
-  metadata = picam2.capture_file('/home/carolynz/CamTest/images/image.jpg')
+  #metadata = picam2.capture_file('/home/carolynz/CamTest/images/image.jpg')
+  metadata = picam2.capture_file(photo_filename)
 
   # FOR DEBUGGING: print metadata
   #print(metadata)
@@ -107,7 +121,7 @@ def take_photo_and_print_poem():
   try:
     # Send saved image to API
     """
-    with open("/home/carolynz/CamTest/images/image.jpg", "rb") as image_file:
+    with open(filename, "rb") as image_file:
       image_caption = replicate.run(
         "andreasjansson/blip-2:4b32258c42e9efd4288bb9910bc532a69727f9acd26aa08e175713a0a857a608",
           input={
@@ -118,7 +132,7 @@ def take_photo_and_print_poem():
     print('caption: ', image_caption)
     """
 
-    base64_image = encode_image("/home/carolynz/CamTest/images/image.jpg")
+    base64_image = encode_image(photo_filename)
 
     api_key = os.environ['OPENAI_API_KEY']
     headers = {
@@ -364,7 +378,7 @@ def on_release():
       take_photo_and_print_poem()
     else:
       print("ignoring double click while poem is printing")
-  elif duration > 2: #if user held button
+  elif duration > 5: #if user held button
     shutdown()
 
 
@@ -372,14 +386,14 @@ def on_release():
 # KNOB: GET POEM FORMAT
 ################################
 def get_poem_format():
-  poem_format = '4 line free verse'
+  poem_format = '4 line free verse. DO NOT EXCEED 4 LINES.'
 
   if knob1.is_pressed:
-    poem_format = '4 line free verse'
+    poem_format = '4 line free verse. DO NOT EXCEED 4 LINES.'
   elif knob2.is_pressed:
     poem_format = 'Modern Sonnet. ABAB, CDCD, EFEF, GG rhyme scheme sonnet. The poem must match the format of a sonnet, but it should be written in modern vernacular englis, it must not be written in olde english'
   elif knob3.is_pressed:
-    poem_format = 'limerick'
+    poem_format = 'limerick. DO NOT EXCEED 5 LINES.'
   elif knob4.is_pressed:
     poem_format = 'couplet. You must write a poem that is only two lines long. Make sure to incorporate elements from the image. It must be only two lines.'
   elif knob5.is_pressed:
