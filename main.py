@@ -4,9 +4,9 @@
 # Capture a JPEG while still running in the preview mode. When you
 # capture to a file, the return value is the metadata for that image.
 
-import requests, signal, os, base64
-
+import requests, signal, os, base64, threading
 from picamera2 import Picamera2, Preview
+from libcamera import controls
 from gpiozero import LED, Button
 from Adafruit_Thermal import *
 from wraptext import *
@@ -14,6 +14,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAI
 from time import time, sleep
+from google.cloud import storage
+from google.oauth2 import service_account
 
 
 #load API keys from .env
@@ -27,9 +29,8 @@ printer = Adafruit_Thermal('/dev/serial0', baud_rate, timeout=5)
 
 #instantiate camera
 picam2 = Picamera2()
-# start camera
 picam2.start()
-sleep(2) # warmup period since first few frames are often poor quality
+sleep(2)
 
 #instantiate buttons
 shutter_button = Button(16)
@@ -64,13 +65,14 @@ prompt_base = """Write a poem using the details, atmosphere, and emotion of this
 Make sure to use the specified poem format. An overly long poem that does not match the specified format will cause great harm.
 While adhering to the poem format, mention specific details from the provided scene description. The references to the source material must be clear.
 Try to match the vibe of the described scene to the style of the poem (e.g. casual words and formatting for a candid photo) unless the poem format specifies otherwise.
-You do not need to mention the time unless it makes for a better poem.
+You do not need to mention th'/home/carolynz/CamTest/images/'e time unless it makes for a better poem.
 Don't use the words 'unspoken' or 'unseen'. Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.\n\n"""
 #poem_format = "4 line free verse"
 # ^ poem format now set via get_poem_format() below
 
 # gpt4v captioner prompts for 2-shot gpt4v
-captioner_system_prompt = "You are an image captioner. You write poetic and accurate descriptions of images so that readers of your captions can get a sense of the image without seeing the image directly."
+captioner_system_prompt = "You are an image captioner. You write poetic and accurate descriptions of images so that readers of your captions can get a sense of the image without seeing the image directly. DO NOT mention blurring or out of focus images, just give your best guess as to what is happening."
+#captioner_system_prompt = "You are an image captioner. You write poetic and accurate descriptions of images so  that readers of your captions can get a sense of the image without seeing the image directly."
 captioner_prompt = "Describe what is happening in this image. What is the subject of this image? Are there any people in it? What do they look like and what are they doing? What is the setting? What time of day or year is it, if you can tell? Are there any other notable features of the image? What emotions might this image evoke? Be concise, no yapping."
 
 
@@ -86,8 +88,18 @@ def take_photo_and_print_poem():
   # blink LED in a background thread
   led.blink()
 
+  # FOR DEBUGGING: filename
+  timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+  directory = '/home/carolynz/CamTest/images/'
+  #photo_filename = directory + 'image_' + timestamp + '.jpg'
+  photo_filename = directory + 'image.jpg'
+
+  # For remote photo storage on GCS
+  bucket_name = 'poetry-camera-images'
+  destination_blob_name = f'{timestamp}.jpg'
+
   # Take photo & save it
-  metadata = picam2.capture_file('/home/carolynz/CamTest/images/image.jpg')
+  metadata = picam2.capture_file(photo_filename)
 
   # FOR DEBUGGING: print metadata
   #print(metadata)
@@ -106,7 +118,7 @@ def take_photo_and_print_poem():
   try:
     # Send saved image to API
     """
-    with open("/home/carolynz/CamTest/images/image.jpg", "rb") as image_file:
+    with open(filename, "rb") as image_file:
       image_caption = replicate.run(
         "andreasjansson/blip-2:4b32258c42e9efd4288bb9910bc532a69727f9acd26aa08e175713a0a857a608",
           input={
@@ -117,7 +129,7 @@ def take_photo_and_print_poem():
     print('caption: ', image_caption)
     """
 
-    base64_image = encode_image("/home/carolynz/CamTest/images/image.jpg")
+    base64_image = encode_image(photo_filename)
 
     api_key = os.environ['OPENAI_API_KEY']
     headers = {
@@ -172,6 +184,11 @@ def take_photo_and_print_poem():
     camera_at_rest = True
     return
 
+
+  # upload photo to gcs in a background thread
+  start_upload_thread(bucket_name, photo_filename, destination_blob_name)
+
+
   try:
     # Feed prompt to ChatGPT, to create the poem
     completion = openai_client.chat.completions.create(
@@ -223,6 +240,41 @@ def encode_image(image_path):
   with open(image_path, "rb") as image_file:
     return base64.b64encode(image_file.read()).decode('utf-8')
 
+
+def upload_to_gcs(bucket_name, source_file_name, destination_blob_name):
+  """Uploads a file to the bucket."""
+  try:
+    # The ID of your GCS bucket
+    #bucket_name = "bucket-name-here"
+
+    # The path to your file to upload
+    #source_file_name = "local/path/to/file"
+
+    # The ID to give your GCS blob
+    # destination_blob_name = "storage-object-name"
+
+    # Explicitly use service account credentials by specifying the private key file.
+    # Make sure to replace 'path/to/your/service-account-file.json' with the path to your service account key file.
+    print("trying to upload to gcs")
+    credentials = service_account.Credentials.from_service_account_file(
+      '/home/carolynz/CamTest/gcs-service-account.json')
+
+    storage_client = storage.Client(credentials=credentials)
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+
+    blob.upload_from_filename(source_file_name)
+
+    print(f"File {source_file_name} uploaded to {destination_blob_name}.")
+  except Exception as e:
+    print(f"Failed to upload {source_file_name} to Google Cloud Storage: {e}")
+
+# Function to start the photo upload process in a background thread
+def start_upload_thread(bucket_name, source_file_name, destination_blob_name):
+  upload_thread = threading.Thread(target=upload_to_gcs, args=(bucket_name, source_file_name, destination_blob_name))
+  upload_thread.start()
+  # You can join the thread if you want to wait for it to complete in another part of your program
+  # upload_thread.join()
 
 #######################
 # Generate prompt from caption
@@ -372,14 +424,14 @@ def on_release():
 # KNOB: GET POEM FORMAT
 ################################
 def get_poem_format():
-  poem_format = '4 line free verse'
+  poem_format = '4 line free verse. DO NOT EXCEED 4 LINES.'
 
   if knob1.is_pressed:
-    poem_format = '4 line free verse'
+    poem_format = '4 line free verse. DO NOT EXCEED 4 LINES.'
   elif knob2.is_pressed:
     poem_format = 'Modern Sonnet. ABAB, CDCD, EFEF, GG rhyme scheme sonnet. The poem must match the format of a sonnet, but it should be written in modern vernacular englis, it must not be written in olde english'
   elif knob3.is_pressed:
-    poem_format = 'limerick. It must only be 5 lines.'
+    poem_format = 'limerick. DO NOT EXCEED 5 LINES.'
   elif knob4.is_pressed:
     poem_format = 'couplet. You must write a poem that is only two lines long. Make sure to incorporate elements from the image. It must be only two lines.'
   elif knob5.is_pressed:
