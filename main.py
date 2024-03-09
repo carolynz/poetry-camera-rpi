@@ -93,7 +93,6 @@ def take_photo_and_print_poem():
 
   # blink LED in a background thread
   led.blink()
-  #led.off()
 
   # FOR DEBUGGING: filename
   timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
@@ -314,7 +313,8 @@ def print_footer():
   printer.println("_.` `._.` `._.` `._.` `._.` `._")
   printer.println('\n')
   printer.println('poetry camera')
-  printer.println('@ usv ai art demo night')
+  printer.println('@ human-assisted art:')
+  printer.println('renaissance')
   printer.println()
   printer.println('explore the archives at')
   printer.println('poetry.camera')
@@ -379,7 +379,7 @@ def on_release():
       take_photo_and_print_poem()
     else:
       print("ignoring double click while poem is printing")
-  elif duration > 5: #if user held button
+  elif duration > 9: #if user held button
     shutdown()
 
 
@@ -406,8 +406,8 @@ def get_poem_format():
     poem_format = 'haiku. You must match the 5 syllable, 7 syllable, 5 syllable format. It must not rhyme'
   elif knob8.is_pressed:
     poem_format = 'Tanka: A japanese form similar to the haiku but longer, with a syllable pattern of: 5, 7, 5, 7, 7'
-  #else:
-  #  poem_format = 'limerick'
+  else:
+    poem_format = 'limerick. It must only be 5 lines.'
   print('----- POEM FORMAT: ' + poem_format)
 
   return poem_format
