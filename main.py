@@ -193,7 +193,7 @@ def take_photo_and_print_poem():
     print_poem(f"Alas, something went wrong.\n\n.Technical details:\n Error while writing poem. {error_message}")
     print_poem("\n\nTroubleshooting:")
     print_poem("1. Check your wifi connection.")
-    print_poem("2. Try restarting the camera by holding the shutter button for 3 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
+    print_poem("2. Try restarting the camera by holding the shutter button for 10 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
     print_poem("3. You may just need to wait a bit and it will pass.")
     print_footer()
     led.on()
@@ -278,7 +278,7 @@ def print_header():
   printer.justify('C') # center align header text
   date_string = now.strftime('%b %-d, %Y')
   time_string = now.strftime('%-I:%M %p')
-  printer.println('\n')
+  #printer.println('\n')
   printer.println(date_string)
   printer.println(time_string)
 
@@ -301,9 +301,9 @@ def print_footer():
   printer.println('@ human-assisted art:')
   printer.println('renaissance')
   printer.println()
-  printer.println('explore the archives at')
-  printer.println('poetry.camera')
-  printer.println('\n\n\n\n')
+  printer.println('more at poetry.camera')
+  #printer.println('poetry.camera')
+  printer.println('\n\n\n\n\n')
 
 
 ##############
