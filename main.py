@@ -29,11 +29,11 @@ printer = Adafruit_Thermal('/dev/serial0', baud_rate, timeout=5)
 #instantiate camera
 picam2 = Picamera2()
 #config = picam2.create_preview_configuration()
-#picam2.configure(config)
-# start camera
+# picam2.configure(config)
+#start camera
 # picam2.start(show_preview = True)
 # sleep(2) #warmup period since first few frames are often poor quality
-#picam2.set_controls({"AfMode": controls.AfModeEnum.Continuous, "AfSpeed": controls.AfSpeedEnum.Fast})
+# picam2.set_controls({"AfMode": controls.AfModeEnum.Continuous, "AfSpeed": controls.AfSpeedEnum.Fast})
 
 picam2.start()
 sleep(2)
@@ -96,9 +96,10 @@ def take_photo_and_print_poem():
   #led.off()
 
   # FOR DEBUGGING: filename
-  timestamp = datetime.now.strftime('%Y-%m-%d_%H-%M-%S')
+  timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
   directory = '/home/carolynz/CamTest/images/'
-  photo_filename = directory + 'image_' + timestamp + '.jpg'
+  #photo_filename = directory + 'image_' + timestamp + '.jpg'
+  photo_filename = directory + 'image.jpg'
 
   # Take photo & save it
   #metadata = picam2.capture_file('/home/carolynz/CamTest/images/image.jpg')
