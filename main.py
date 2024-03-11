@@ -349,9 +349,7 @@ def print_footer():
   printer.println("   .     .     .     .     .   ")
   printer.println("_.` `._.` `._.` `._.` `._.` `._")
   printer.println('\n')
-  printer.println('poetry camera')
-  printer.println('@ human-assisted art:')
-  printer.println('renaissance')
+  printer.println('poetry camera x atlantic records')
   printer.println()
   printer.println('more at poetry.camera')
   #printer.println('poetry.camera')
@@ -438,7 +436,8 @@ def get_poem_format():
     # poem_format = 'word mode - instead of writing a poem, invent a word which describes something unique in this scene. Include the word, followed by the definition and etymology'
     poem_format = 'poem where each word begins with the same letter. It must be four lines or less.'
   elif knob6.is_pressed:
-    poem_format = 'Quatrain - four line poem'
+    poem_format = 'word mode - instead of writing a poem, invent a word which describes something unique in this scene. Include the word, followed by the definition and etymology. In your response, mention that you discovered a new word to describe this scene. Be concise. No yapping.'
+    #poem_format = 'Quatrain - four line poem'
   elif knob7.is_pressed:
     poem_format = 'haiku. You must match the 5 syllable, 7 syllable, 5 syllable format. It must not rhyme'
   elif knob8.is_pressed:
