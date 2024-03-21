@@ -94,9 +94,9 @@ def take_photo_and_print_poem():
   #photo_filename = directory + 'image_' + timestamp + '.jpg'
   photo_filename = directory + 'image.jpg'
 
-  # For remote photo storage on GCS
-  bucket_name = 'poetry-camera-images'
-  destination_blob_name = f'{timestamp}.jpg'
+  # FOR DEBUGGING: storage on GCS
+  #bucket_name = 'poetry-camera-images'
+  #destination_blob_name = f'{timestamp}.jpg'
 
   # Take photo & save it
   metadata = picam2.capture_file(photo_filename)
@@ -185,8 +185,8 @@ def take_photo_and_print_poem():
     return
 
 
-  # upload photo to gcs in a background thread
-  start_upload_thread(bucket_name, photo_filename, destination_blob_name)
+  # FOR DEBUGGING: upload photo to gcs in a background thread
+  #start_upload_thread(bucket_name, photo_filename, destination_blob_name)
 
 
   try:
@@ -240,7 +240,7 @@ def encode_image(image_path):
   with open(image_path, "rb") as image_file:
     return base64.b64encode(image_file.read()).decode('utf-8')
 
-
+# upload to gcs FOR DEBUGGING ONLY
 def upload_to_gcs(bucket_name, source_file_name, destination_blob_name):
   """Uploads a file to the bucket."""
   try:
