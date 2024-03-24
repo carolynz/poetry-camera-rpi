@@ -349,9 +349,10 @@ def print_footer():
   printer.println("   .     .     .     .     .   ")
   printer.println("_.` `._.` `._.` `._.` `._.` `._")
   printer.println('\n')
-  printer.println('poetry camera x atlantic records')
+  printer.println('this poem was written by')
+  printer.println('@poetry.camera')
   printer.println()
-  printer.println('more at poetry.camera')
+  #printer.println('more at poetry.camera')
   #printer.println('poetry.camera')
   printer.println('\n\n\n\n\n')
 
