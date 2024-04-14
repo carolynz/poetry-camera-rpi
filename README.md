@@ -3,7 +3,7 @@ A camera that prints poems of what it sees.
 
 We started this project as newcomers to the world of hobby electronics. The following instructions are intended for complete beginners, as we were. We simplified some of the design to optimize for easily sourcing and assembling parts; as a result, it's less compact than our photographed versions. If you are comfortable with electronics and coding, we encourage you to experiment and remix even more. 
 
-These instructions are still in progress. Try it out and let us know what's confusing, or doesn't work. We are also looking for help on improving the battery design.
+⚠️ These instructions are still in progress. ⚠️  Try it out and let us know what's confusing, or doesn't work.
 
 ## Hardware you'll need
 ### 1. Computer: [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/) with headers
