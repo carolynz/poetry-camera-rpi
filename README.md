@@ -68,26 +68,41 @@ The [Nano Thermal Printer](https://www.adafruit.com/product/2752) or [Thermal Pr
 
 
 ### 5. Batteries:
-Batteries remain a challenge for this project because the Pi and the receipt printer have very different power requirements. You could always just keep Poetry Camera plugged in, but that restricts the amount of interesting photos you could take.
+<img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/b3507b14-3b12-4fbc-99fa-ffc5c589bf93" width="300">
+<img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/5196a5ee-d70e-4b69-91fd-e165cc368f7e" width="300">
+<img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/f1340f50-e492-4696-bd9f-2196155552ec" width="300">
 
-We've heard of people having success with 2x 18620 batteries. We have not tried this yet, but it seems promising.
+If you want your camera to be portable, you'll need some batteries! The Pi requires a steady 5V of power @ 1.2A, while the printer needs 5-9V and draws ~2A while printing.
 
-  - Battery for the receipt printer: [6 x AA battery holder with 5.5mm/2.1mm plug](https://www.adafruit.com/product/248) + 6x AA batteries
+**Recommended power supply: 6xAA batteries**
+It's not the lightest solution, but it's a beginner-friendly starting point.
+  - [6 x AA battery holder with DC plug](https://www.adafruit.com/product/248)
+  - 6x AA batteries — rechargeable NiMH batteries (e.g., Eneloop) provide 7.2V, non-rechargeable alkaline batteries (e.g., Duracell) provide 9V. Either works. Of course, don't mix batteries!
+  - [In-line power switch for DC barrel jack](https://www.adafruit.com/product/1125) to control flow of power to circuit
+  - [DC wire terminal block](https://www.adafruit.com/product/368) to connect batteries to circuit
+  - [Step-down (buck) converter — 5V @ 3A output](https://www.adafruit.com/product/1385) steps down the battery voltage to 5V for the Raspberry Pi
+  - [MicroUSB shell](https://www.adafruit.com/product/1826) to power the Pi, or cut open a MicroUSB cable
+  - Soldering iron
 
-    <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/b3507b14-3b12-4fbc-99fa-ffc5c589bf93" width="300">
-    - The printer needs a 5-9V power source that can handle high current draw while printing. Typical 9V alkaline batteries do *not* work as they do not provide enough current. To keep things simple for assembly, we've separated out the power sources, but it makes things bulkier.
-  - Battery for the Raspberry Pi:
-    - The Pi needs consistent 5V of power in order to function, which standard phone battery packs do not provide, and the PiSugar battery we did find has also occasionally driven it to overheating.
+**Other solutions that could work:**
+  - Put the above circuit on a PCB so you just need to plug in the connectors instead of soldering — we did this for our project! Will upload gerber files in the future.
+  - 7.2V lithium batteries, e.g. 2x 18650s
+  - [7.4V NiMH batteries for RC cars](https://www.amazon.com/s?k=7.2v+rc+battery&i=toys-and-games&crid=1FRMK7CHC0RRQ&sprefix=7.2v+rc+battery,toys-and-games,127)
+  - If you don't need it to be *super* portable, get a [portable power station](https://www.amazon.com/gp/product/B0CH2Z2JM9) to plug in the Pi and printer
+  - If you don't want to solder, you could power the Pi and printer through two separate batteries. However, we've run into overheating issues with the commonly-recommended [PiSugar 3 battery](https://www.tindie.com/products/pisugar/pisugar-3-battery-for-raspberry-pi-zero/).
+    
+**Power supplies that DON'T work:**
+  - Typical 9V alkaline batteries do *not* work as they do not provide enough current
+  - Standard phone banks don't provide continuous power to the Raspberry Pi, causing it to shut down after a few minutes
+  - Just plugging both devices in to a single 5V power bank — it can't handle the current draw while printing. Either the Pi shuts down during printing, or the printer doesn't have enough power to print.
 
 
-### 6. Buttons
-<img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/e8b280b5-f4b9-4495-94bb-c2e0cdd96cef" width="150">
-<img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/f1c8251a-77d4-42d7-ad59-12562386182a" width="150">
+### 6. Shutter button & LED
+<img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/90120571-7d96-4e9a-b14c-e1e6228f2403" width="300">
+Any LED + momentary pushbutton will work for the shutter button. We use the LED as a status indicator for things like ready, loading, etc.
 
-  - 2 [push buttons in different colors](https://www.adafruit.com/search?q=16mm%20Panel%20Mount%20Momentary%20Pushbutton)
+  - [Illuminated pushbutton](https://www.adafruit.com/search?q=16mm%20Panel%20Mount%20Momentary%20Pushbutton)
   - 2 [quick-connect wires](https://www.adafruit.com/product/1152) to easily connect these buttons to the Pi
-
-
 
 ### 7. Miscellaneous equipment
   - Wire cutter & stripper
