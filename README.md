@@ -127,16 +127,18 @@ Currently, the `main.py` script running on the Pi:
 The `Adafruit_Thermal.py` script is [Adafruit's thermal printer Python library](https://github.com/adafruit/Python-Thermal-Printer).
 
 ## How to set up
-This was cobbled together from the following tutorials:
+This was adapted from the following tutorials:
 - [Instant Camera using Raspberry Pi and Thermal Printer](https://learn.adafruit.com/instant-camera-using-raspberry-pi-and-thermal-printer)
 - [Networked Thermal Printer using Raspberry Pi and CUPS](https://learn.adafruit.com/networked-thermal-printer-using-cups-and-raspberry-pi)
 
+### Part 1. Check that your Raspberry Pi & camera works
+1. Connect your Raspberry Pi to Camera.
 
-1. Set up your Raspberry Pi with Camera connection.
+2. Insert your SD card onto the Pi.
 
-2. Open up the Terminal on your Pi.
+3. Connect your Pi to a monitor. Once it's on, open up the Terminal on your Pi to start making changes.
 
-3. Set up Raspberry Pi hardware to take Camera & Serial inputs:
+4. Set up Raspberry Pi hardware to take Camera & Serial inputs:
 ```shell
 sudo raspi-config
 ```
@@ -147,6 +149,8 @@ sudo raspi-config
 
     Restart the system as needed.
 
+
+### Part 2. Check that your printer works
 5. Update the system and install requirements. I'm not sure you even need all of these; I can go over these again later and trim out the unnecessary ones.
 ```shell
 $ sudo apt-get update
@@ -183,14 +187,20 @@ $ cd poetry-camera-rpi
 printer = Adafruit_Thermal('/dev/serial0', 19200, timeout=5)
 ```
 
+[TODO] need a setup script to test that the printer works
+
+### Part 3. Set up the AI
+[INSTRUCTIONS TO COME]
+
+### Part 4. Get it working end-to-end
+10. Connect buttons
+
 11. Run the poetry camera script.
 ```shell
 $ python main.py
 ```
 
-## TODO instructions for adding buttons
-
-## TODO instructions for auto-start/shutoff
+## Part 5. Automatically run the software when the camera turns on
 - Set up a `cron` job to run your python script at startup. First, open your `crontab` file to your default editor:
 ```shell
 $ crontab -e
@@ -207,7 +217,7 @@ The `>> {...}errors.txt 2>&1` writes any error messages to `errors.txt` for debu
 ```shell
 sudo reboot
 ```
+Now reboot your camera and wait for the LED light to turn on!
 
-- Try clicking your shutter and power buttons to make sure they're working upon reboot. If they're not working, check your `errors.txt` file.
 
-Lots of errors in these instructions, I'm sure.
+## Part 6. Make the power circuit
