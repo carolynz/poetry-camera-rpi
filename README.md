@@ -14,9 +14,11 @@ Raspberry Pis are simplified computers. They are lightweight, cheap, have limite
 
 We chose the Pi Zero 2 for its balance of processing power (Pi Zeros are too slow) and compact size (most other Pis on the market are larger). The wire diagrams in this tutorial will apply to all Raspberry Pis, but there may be differences in software and camera compatibility, especially with older devices. We've tested this with a [Pi 3b+](https://www.raspberrypi.com/products/raspberry-pi-3-model-b-plus/) and it works fine, but a [Pi 4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/) probably requires too much power to make it a viable portable solution.
 
-Raspberry Pi Zero 2 is often sold without headers (those 2x20 black metal connectors). The headers let you easily connect the Pi to the printer and buttons with plug-in jumper wires. If you buy the Pi without headers, you'll need to separately buy a [2x20 header](https://www.adafruit.com/product/2822) and solder them on yourself. It's not hard, but leaves more room for error. (Of course, if you know what you're doing, you can directly solder the appropriate wires to the appropriate pins without headers.)
+Raspberry Pi Zero 2 is often sold without headers (those 2x20 black metal connectors). The headers let you easily connect the Pi to the printer and buttons with plug-in jumper wires. If you buy the Pi without headers, you'll need to separately buy a [2x20 header](https://www.adafruit.com/product/2822) and solder them on yourself. If you don't want to solder, you can use [hammer-on headers](https://www.adafruit.com/product/3662) and [this installation rig](https://www.amazon.com/vilros-raspberry-headers-easy-installation-soldering/dp/b0cgryyy63).
 
-<img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/43c619a8-a416-4c18-8013-4ff36d1d1ba6" width="300"> <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/bdfb1bda-0691-41ac-a7e5-583b66d6cc71" width="300"> 
+<img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/43c619a8-a416-4c18-8013-4ff36d1d1ba6" width="300">
+<img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/ebbbc23e-1e92-4d5a-84de-f761f32720f3" width="300">
+
 
 Raspberry Pis are also recovering from a supply shortage. Check [rpilocator.com](https://rpilocator.com/) for live stock notifications on standalone parts (does not list accessory kits).
 
@@ -53,11 +55,15 @@ Raspberry Pis are also recovering from a supply shortage. Check [rpilocator.com]
 
 <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/209bbe14-b494-4826-8851-61561f4f34ac" width="300">
 
-We used the Adafruit thermal printer line for this project, but they have subsequently been discontinued. Similar products exist on Amazon; we are working on confirming that they still work with the same printer drivers (which are also no longer maintained by Adafruit, but still seem to work). 
+We used the Adafruit thermal printer line for this project, but they have subsequently been discontinued. Similar printers exist on Amazon and Aliexpress; the ones we've bought work with the [same printer drivers](https://github.com/adafruit/zj-58) (which are also no longer maintained by Adafruit, but still seem to work). 
 
-The important thing is that the thermal printer has a TTL serial connection so you can easily connect it to the Pi.
+The [Nano Thermal Printer](https://www.adafruit.com/product/2752) or [Tiny Thermal Printer]([https://www.adafruit.com/product/2753](https://www.adafruit.com/product/2751)) are more compact, but have [slightly different wiring](https://learn.adafruit.com/mini-thermal-receipt-printer/making-connections#for-product-number-2751-tiny-3133460).
 
-The [Nano Thermal Printer](https://www.adafruit.com/product/2752) or [Thermal Printer Guts](https://www.adafruit.com/product/2753) are more compact, but have slightly different wiring.
+The important thing is that the thermal printer has a TTL serial connection so you can easily connect it to the Pi. **Search "TTL embedded thermal printer"** on Amazon or Aliexpress to find your parts. 
+
+  - **Similar receipt printers on Amazon:**
+    - [Dupe for Adafruit Mini printer](https://www.amazon.com/HUIOP-Embedded-Printing-Commands-Apparatus/dp/B0CS3NRPV3)
+    - [Dupe for Adafruit Tiny printer](https://www.amazon.com/XIXIAN-Thermal-Embedded-Interface-Printing/dp/B0C5XGJWC4)
 
   - **Receipt printer accessories:**
     - [5V power supply](https://www.adafruit.com/product/276)
@@ -77,7 +83,7 @@ If you want your camera to be portable, you'll need some batteries! The Pi requi
 **Recommended power supply: 6xAA batteries**
 It's not the lightest solution, but it's a beginner-friendly starting point.
   - [6 x AA battery holder with DC plug](https://www.adafruit.com/product/248)
-  - 6x AA batteries — rechargeable NiMH batteries (e.g., Eneloop) provide 7.2V, non-rechargeable alkaline batteries (e.g., Duracell) provide 9V. Either works. Of course, don't mix batteries!
+  - 6 x AA batteries — rechargeable NiMH batteries (e.g., Eneloop) provide 7.2V, non-rechargeable alkaline batteries (e.g., Duracell) provide 9V. Either works. Of course, don't mix batteries!
   - [In-line power switch for DC barrel jack](https://www.adafruit.com/product/1125) to control flow of power to circuit
   - [DC wire terminal block](https://www.adafruit.com/product/368) to connect batteries to circuit
   - [Step-down (buck) converter — 5V @ 3A output](https://www.adafruit.com/product/1385) steps down the battery voltage to 5V for the Raspberry Pi
@@ -99,6 +105,7 @@ It's not the lightest solution, but it's a beginner-friendly starting point.
 
 ### 6. Shutter button & LED
 <img src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/90120571-7d96-4e9a-b14c-e1e6228f2403" width="300">
+
 Any LED + momentary pushbutton will work for the shutter button. We use the LED as a status indicator for things like ready, loading, etc.
 
   - [Illuminated pushbutton](https://www.adafruit.com/search?q=16mm%20Panel%20Mount%20Momentary%20Pushbutton)
