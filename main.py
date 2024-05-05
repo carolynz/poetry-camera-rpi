@@ -419,6 +419,13 @@ def get_poem_format():
 # Checks internet connection upon startup
 def check_internet_connection():
   print("Checking internet connection upon startup")
+  printer.println("\n")
+  printer.justify('C') # center align header text
+  printer.println("hello, i am")
+  printer.println("poetry camera")
+  printer.println("\n\n")
+  printer.println("--------------------------------")
+  printer.println("\n\n")
   try:
     # Check for internet connectivity
     subprocess.check_call(['ping', '-c', '1', 'google.com'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -431,40 +438,27 @@ def check_internet_connection():
       printer.println(f"Connected to network: {network_name}")
     else:
       print("Connected to network, but could not retrieve network name.")
-      printer.println(f"Connected to network: {network_name}")
+      printer.println(f"Connected to network, but could not retrieve network name.")
     
+    # printer.justify('L') # center align header text
     
-    printer.println("To change wifi settings:")
-    printer.println("1. On your phone or computer, connect to this wifi network:")
-    printer.println("   Network: PoetryCameraSetup")
-    printer.println("   Password: password")
-    printer.println("2. Once connected, visit poetrycamera.local")
-    printer.println("   or scan this QR code:")
-    printer.println("   TODO ADD A QR CODE HERE??")
-    printer.println("   ~~~~~~~~~~~~~~~~~~")
-    printer.println("   ~~~~~~~~~~~~~~~~~~")
-    printer.println("   ~~~~~~~~~~~~~~~~~~")
-    printer.println("   ~~~~~~~~~~~~~~~~~~")
-    printer.println("   ~~~~~~~~~~~~~~~~~~")
-    printer.println("   ~~~~~~~~~~~~~~~~~~")
+    # printer.println("To change camera settings:")
+    # printer.println("On your phone or computer, connect to this wifi network:")
+    # printer.println("   Network: PoetryCameraSetup")
+    # printer.println("   Password: password")
+    # printer.println("and visit poetrycamera.local in your browser")
+    # printer.println("\n\n\n\n\n")
       
   except subprocess.CalledProcessError:
     print("no internet!")
     printer.println("I'm not connected to the internet!")
     printer.println("I need internet to work!")
-    printer.println("To connect me to the internet:")
-    printer.println("1. On your phone or computer, connect to this wifi network:")
-    printer.println("   Network: PoetryCameraSetup")
-    printer.println("   Password: password")
-    printer.println("2. Once connected, visit poetrycamera.local")
-    printer.println("   or scan this QR code:")
-    printer.println("   TODO ADD A QR CODE HERE??")
-    printer.println("   ~~~~~~~~~~~~~~~~~~")
-    printer.println("   ~~~~~~~~~~~~~~~~~~")
-    printer.println("   ~~~~~~~~~~~~~~~~~~")
-    printer.println("   ~~~~~~~~~~~~~~~~~~")
-    printer.println("   ~~~~~~~~~~~~~~~~~~")
-    printer.println("   ~~~~~~~~~~~~~~~~~~")
+    # printer.println("To connect me to the internet:")
+    # printer.println("On your phone or computer, connect to this wifi network:")
+    # printer.println("   Network: PoetryCameraSetup")
+    # printer.println("   Password: password")
+    # printer.println("and visit poetrycamera.local in your browser")
+    printer.println("\n\n\n\n\n")
 
 ###############################
 # CHECK INTERNET CONNECTION PERIODICALLY, PRINT ERROR MESSAGE IF DISCONNECTED
@@ -476,12 +470,13 @@ def periodic_internet_check(interval):
     try:
       # Check for internet connectivity
       subprocess.check_call(['ping', '-c', '1', 'google.com'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-      print("Internet connection is active.")
-      printer.println(time_string + ": checked internet, it is active!")
+      # print("Internet connection is active.")
     except subprocess.CalledProcessError:
-      print("Internet connection lost. Please check your network settings.")
+      # print("Internet connection lost. Please check your network settings.")
+      printer.println("\n")
       printer.println(time_string + ": oh no, i lost internet!")
       printer.println("please connect to PoetryCameraSetup wifi network on your phone to fix me!")
+      printer.println('\n\n\n\n\n')
     sleep(interval) #makes thread idle during sleep period, freeing up CPU resources
 
 def start_periodic_internet_check():
