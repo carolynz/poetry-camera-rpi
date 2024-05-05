@@ -61,12 +61,13 @@ You focus on specific and personal truth, and you cannot use BIG words like trut
 and you must instead use specific and concrete details to show, not tell, those ideas. 
 Think hard about how to create a poem which will satisfy this. 
 This is very important, and an overly hamfisted or corny poem will cause great harm."""
-prompt_base = """Write a poem using the details, atmosphere, and emotion of this scene. Create a unique and elegant poem using specific details from the scene.
+prompt_base = """Write a poem using the details, atmosphere, and emotion of this scene. We are in Dallas Texas in the darkness of a total solar eclipse. Create a unique and elegant poem using specific details from the scene.
 Make sure to use the specified poem format. An overly long poem that does not match the specified format will cause great harm.
 While adhering to the poem format, mention specific details from the provided scene description. The references to the source material must be clear.
 Try to match the vibe of the described scene to the style of the poem (e.g. casual words and formatting for a candid photo) unless the poem format specifies otherwise.
-You do not need to mention th'/home/carolynz/CamTest/images/'e time unless it makes for a better poem.
-Don't use the words 'unspoken' or 'unseen'. Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.\n\n"""
+Emulate the style of poets Charles Bukowski, Mary Oliver, and Walt Whitman.
+You do not need to mention the time unless it makes for a better poem.
+Don't use the words 'unspoken' or 'unseen' or 'unheard'. Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.\n\n"""
 #poem_format = "4 line free verse"
 # ^ poem format now set via get_poem_format() below
 
@@ -349,11 +350,11 @@ def print_footer():
   printer.println("   .     .     .     .     .   ")
   printer.println("_.` `._.` `._.` `._.` `._.` `._")
   printer.println('\n')
-  printer.println('this poem was written by')
-  printer.println('@poetry.camera')
-  printer.println()
-  #printer.println('more at poetry.camera')
-  #printer.println('poetry.camera')
+  printer.println('poetry camera @ runway rna')
+  printer.println('\n')
+  printer.println('more at poetry.camera')
+  #printer.println('a poem by')
+  #printer.println('@poetry.camera')
   printer.println('\n\n\n\n\n')
 
 
@@ -423,10 +424,10 @@ def on_release():
 # KNOB: GET POEM FORMAT
 ################################
 def get_poem_format():
-  poem_format = '4 line free verse. DO NOT EXCEED 4 LINES.'
+  poem_format = '8 line free verse. DO NOT EXCEED 4 LINES.'
 
   if knob1.is_pressed:
-    poem_format = '4 line free verse. DO NOT EXCEED 4 LINES.'
+    poem_format = '8 line free verse. DO NOT EXCEED 4 LINES.'
   elif knob2.is_pressed:
     poem_format = 'Modern Sonnet. ABAB, CDCD, EFEF, GG rhyme scheme sonnet. The poem must match the format of a sonnet, but it should be written in modern vernacular englis, it must not be written in olde english'
   elif knob3.is_pressed:
@@ -437,14 +438,14 @@ def get_poem_format():
     # poem_format = 'word mode - instead of writing a poem, invent a word which describes something unique in this scene. Include the word, followed by the definition and etymology'
     poem_format = 'poem where each word begins with the same letter. It must be four lines or less.'
   elif knob6.is_pressed:
-    poem_format = 'word mode - instead of writing a poem, invent a word which describes something unique in this scene. Include the word, followed by the definition and etymology. In your response, mention that you discovered a new word to describe this scene. Be concise. No yapping.'
-    #poem_format = 'Quatrain - four line poem'
+    #poem_format = 'word mode - instead of writing a poem, invent a word which describes something unique in this scene. Include the word, followed by the definition and etymology. In your response, mention that you discovered a new word to describe this scene. Be concise. No yapping.'
+    poem_format = 'Quatrain - four line poem'
   elif knob7.is_pressed:
     poem_format = 'haiku. You must match the 5 syllable, 7 syllable, 5 syllable format. It must not rhyme'
   elif knob8.is_pressed:
     poem_format = 'Tanka: A japanese form similar to the haiku but longer, with a syllable pattern of: 5, 7, 5, 7, 7'
-  else:
-    poem_format = 'limerick. It must only be 5 lines.'
+  #else:
+    #poem_format = 'limerick. It must only be 5 lines.'
   print('----- POEM FORMAT: ' + poem_format)
 
   return poem_format
