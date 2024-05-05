@@ -4,4 +4,4 @@ __pycache__/
 errors.txt
 .env
 gcs-service-account.json
-
+.DS_Store
