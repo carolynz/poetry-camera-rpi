@@ -86,7 +86,6 @@ pexpect==4.8.0
 pgzero==1.2
 phatbeat==0.1.1
 pianohat==0.1.0
-picamera==1.13
 picamera2==0.3.8
 pickleshare==0.7.5
 pidng==4.0.9
