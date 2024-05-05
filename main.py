@@ -14,9 +14,6 @@ from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAI
 from time import time, sleep
-from google.cloud import storage
-from google.oauth2 import service_account
-
 
 #load API keys from .env
 load_dotenv()
@@ -60,7 +57,7 @@ You focus on specific and personal truth, and you cannot use BIG words like trut
 and you must instead use specific and concrete details to show, not tell, those ideas. 
 Think hard about how to create a poem which will satisfy this. 
 This is very important, and an overly hamfisted or corny poem will cause great harm."""
-prompt_base = """Write a poem using the details, atmosphere, and emotion of this scene. We are in Dallas Texas in the darkness of a total solar eclipse. Create a unique and elegant poem using specific details from the scene.
+prompt_base = """Write a poem using the details, atmosphere, and emotion of this scene. Create a unique and elegant poem using specific details from the scene.
 Make sure to use the specified poem format. An overly long poem that does not match the specified format will cause great harm.
 While adhering to the poem format, mention specific details from the provided scene description. The references to the source material must be clear.
 Try to match the vibe of the described scene to the style of the poem (e.g. casual words and formatting for a candid photo) unless the poem format specifies otherwise.
@@ -92,7 +89,6 @@ def take_photo_and_print_poem():
   directory = '/home/carolynz/CamTest/images/'
   #photo_filename = directory + 'image_' + timestamp + '.jpg'
   photo_filename = directory + 'image.jpg'
-
 
   # Take photo & save it
   metadata = picam2.capture_file(photo_filename)
