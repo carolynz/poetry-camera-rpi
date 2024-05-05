@@ -15,41 +15,25 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from time import time, sleep
 
-#load API keys from .env
-load_dotenv()
-openai_client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 
-#instantiate printer
-baud_rate = 9600 # REPLACE WITH YOUR OWN BAUD RATE
-printer = Adafruit_Thermal('/dev/serial0', baud_rate, timeout=5)
+##############################
+# GLOBAL CONSTANTS FOR PROMPTS
+##############################
+CAPTION_SYSTEM_PROMPT = """You are an image captioner. 
+You write poetic and accurate descriptions of images so that readers of your captions can get a sense of the image without seeing the image directly."""
 
-#instantiate camera
-picam2 = Picamera2()
-picam2.start()
-sleep(2)
+CAPTION_PROMPT = """Describe what is happening in this image. 
+What is the subject of this image? 
+Are there any people in it? 
+What do they look like and what are they doing?
+What is the setting? 
+What time of day or year is it, if you can tell? 
+Are there any other notable features of the image? 
+What emotions might this image evoke? 
+Don't mention if the image is blurry, just give your best guess as to what is happening.
+Be concise, no yapping."""
 
-#instantiate buttons
-shutter_button = Button(16)
-led = LED(26)
-led.on()
-
-# prevent double-click bugs by checking whether the camera is resting
-# (i.e. not in the middle of the whole photo-to-poem process):
-camera_at_rest = True
-
-#if you are using a knob, set different rotary switch knob positions
-knob1 = Button(17)
-knob2 = Button(27)
-knob3 = Button(22)
-knob4 = Button(5)
-knob5 = Button(6)
-knob6 = Button(13)
-knob7 = Button(19)
-knob8 = Button(25)
-current_knob = None
-
-# poem prompts
-system_prompt = """You are a poet. You specialize in elegant and emotionally impactful poems. 
+POEM_SYSTEM_PROMPT = """You are a poet. You specialize in elegant and emotionally impactful poems. 
 You are careful to use subtlety and write in a modern vernacular style. 
 Use high-school level Vocabulary and Professional-level craft. 
 Your poems are easy to relate to and understand. 
@@ -57,20 +41,63 @@ You focus on specific and personal truth, and you cannot use BIG words like trut
 and you must instead use specific and concrete details to show, not tell, those ideas. 
 Think hard about how to create a poem which will satisfy this. 
 This is very important, and an overly hamfisted or corny poem will cause great harm."""
-prompt_base = """Write a poem using the details, atmosphere, and emotion of this scene. Create a unique and elegant poem using specific details from the scene.
-Make sure to use the specified poem format. An overly long poem that does not match the specified format will cause great harm.
-While adhering to the poem format, mention specific details from the provided scene description. The references to the source material must be clear.
+
+POEM_PROMPT_BASE = """Write a poem using the details, atmosphere, and emotion of this scene. 
+Create a unique and elegant poem using specific details from the scene.
+Make sure to use the specified poem format. 
+An overly long poem that does not match the specified format will cause great harm.
+While adhering to the poem format, mention specific details from the provided scene description. 
+The references to the source material must be clear.
 Try to match the vibe of the described scene to the style of the poem (e.g. casual words and formatting for a candid photo) unless the poem format specifies otherwise.
-Emulate the style of poets Charles Bukowski, Mary Oliver, and Walt Whitman.
 You do not need to mention the time unless it makes for a better poem.
-Don't use the words 'unspoken' or 'unseen' or 'unheard'. Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.\n\n"""
-#poem_format = "4 line free verse"
-# ^ poem format now set via get_poem_format() below
+Don't use the words 'unspoken' or 'unseen' or 'unheard'. 
+Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.\n\n"""
+# Poem format (e.g. sonnet, haiku) is set via get_poem_format() below
 
-# gpt4v captioner prompts for 2-shot gpt4v
-captioner_system_prompt = "You are an image captioner. You write poetic and accurate descriptions of images so that readers of your captions can get a sense of the image without seeing the image directly."
-captioner_prompt = "Describe what is happening in this image. What is the subject of this image? Are there any people in it? What do they look like and what are they doing? What is the setting? What time of day or year is it, if you can tell? Are there any other notable features of the image? What emotions might this image evoke? DO NOT mention blurring or out of focus images, just give your best guess as to what is happening. Be concise, no yapping."
 
+def initialize():
+  # Load environment variables
+  load_dotenv()
+
+  # Set up OpenAI client
+  global openai_client
+  openai_client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+
+  # Set up printer
+  global printer
+  BAUD_RATE = 9600 # REPLACE WITH YOUR OWN BAUD RATE
+  printer = Adafruit_Thermal('/dev/serial0', BAUD_RATE, timeout=5)
+
+  # Set up camera
+  global picam2, camera_at_rest
+  picam2 = Picamera2()
+  picam2.start()
+  sleep(2) # camera warm-up time
+  
+  # prevent double-click bugs by checking whether the camera is resting
+  # (i.e. not in the middle of the whole photo-to-poem process):
+  camera_at_rest = True
+
+  # Set up shutter button & status LED
+  global shutter_button, led
+  shutter_button = Button(16)
+  led = LED(26)
+  led.on()
+
+  # button event handlers
+  shutter_button.when_pressed = on_press
+  shutter_button.when_released = on_release
+
+  # Set up knob, if you are using a knob
+  global knob1, knob2, knob3, knob4, knob5, knob6, knob7, knob8
+  knob1 = Button(17)
+  knob2 = Button(27)
+  knob3 = Button(22)
+  knob4 = Button(5)
+  knob5 = Button(6)
+  knob6 = Button(13)
+  knob7 = Button(19)
+  knob8 = Button(25)
 
 #############################
 # CORE PHOTO-TO-POEM FUNCTION
@@ -84,9 +111,9 @@ def take_photo_and_print_poem():
   # blink LED in a background thread
   led.blink()
 
-  # FOR DEBUGGING: filename
-  timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+  # FOR DEBUGGING: filename  
   directory = '/home/carolynz/CamTest/images/'
+  # timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
   #photo_filename = directory + 'image_' + timestamp + '.jpg'
   photo_filename = directory + 'image.jpg'
 
@@ -119,14 +146,14 @@ def take_photo_and_print_poem():
       "messages": [
         {
           "role": "system",
-          "content": captioner_system_prompt
+          "content": CAPTION_SYSTEM_PROMPT
         },
         {
           "role": "user",
           "content": [
             {
               "type": "text",
-              "text": captioner_prompt,
+              "text": CAPTION_PROMPT,
             },
             {
               "type": "image_url",
@@ -167,7 +194,7 @@ def take_photo_and_print_poem():
       model="gpt-4",
       messages=[{
         "role": "system",
-        "content": system_prompt
+        "content": POEM_SYSTEM_PROMPT
       }, {
         "role": "user",
         "content": prompt
@@ -213,11 +240,9 @@ def encode_image(image_path):
     return base64.b64encode(image_file.read()).decode('utf-8')
 
 #######################
-# Generate prompt from caption
+# Generate full poem prompt from caption
 #######################
 def generate_prompt(image_description):
-
-  # reminder: prompt_base is global var
 
   # prompt what type of poem to write
   prompt_format = "Poem format: " + get_poem_format() + "\n\n"
@@ -230,7 +255,7 @@ def generate_prompt(image_description):
   prompt_time = "Scene date and time: " + formatted_time + "\n\n"
 
   # stitch together full prompt
-  prompt = prompt_base + prompt_format + prompt_scene + prompt_time
+  prompt = POEM_PROMPT_BASE + prompt_format + prompt_scene + prompt_time
 
   # idk how to remove the brackets and quotes from the prompt
   # via custom filters so i'm gonna remove via this janky code lol
@@ -381,12 +406,8 @@ def get_poem_format():
   return poem_format
 
 
-###############################
-# LISTEN FOR BUTTON PRESS EVENTS
-################################
-shutter_button.when_pressed = on_press
-shutter_button.when_released = on_release
-
-#keeps script alive so the camera functionality keeps running
-signal.pause()
-
+# Call initialize at the appropriate place
+if __name__ == "__main__":
+    initialize()
+    # Keep script running to listen for button presses
+    signal.pause()
