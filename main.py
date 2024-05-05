@@ -41,7 +41,7 @@ led.on()
 # (i.e. not in the middle of the whole photo-to-poem process):
 camera_at_rest = True
 
-#different rotary switch knob positions
+#if you are using a knob, set different rotary switch knob positions
 knob1 = Button(17)
 knob2 = Button(27)
 knob3 = Button(22)
@@ -72,15 +72,15 @@ Don't use the words 'unspoken' or 'unseen' or 'unheard'. Do not be corny or clic
 # ^ poem format now set via get_poem_format() below
 
 # gpt4v captioner prompts for 2-shot gpt4v
-captioner_system_prompt = "You are an image captioner. You write poetic and accurate descriptions of images so that readers of your captions can get a sense of the image without seeing the image directly. DO NOT mention blurring or out of focus images, just give your best guess as to what is happening."
-#captioner_system_prompt = "You are an image captioner. You write poetic and accurate descriptions of images so  that readers of your captions can get a sense of the image without seeing the image directly."
-captioner_prompt = "Describe what is happening in this image. What is the subject of this image? Are there any people in it? What do they look like and what are they doing? What is the setting? What time of day or year is it, if you can tell? Are there any other notable features of the image? What emotions might this image evoke? Be concise, no yapping."
+captioner_system_prompt = "You are an image captioner. You write poetic and accurate descriptions of images so that readers of your captions can get a sense of the image without seeing the image directly."
+captioner_prompt = "Describe what is happening in this image. What is the subject of this image? Are there any people in it? What do they look like and what are they doing? What is the setting? What time of day or year is it, if you can tell? Are there any other notable features of the image? What emotions might this image evoke? DO NOT mention blurring or out of focus images, just give your best guess as to what is happening. Be concise, no yapping."
 
 
 
 #############################
 # CORE PHOTO-TO-POEM FUNCTION
 #############################
+# Called when shutter button is pressed
 def take_photo_and_print_poem():
   # prevent double-clicks by indicating camera is active
   global camera_at_rest
@@ -105,11 +105,8 @@ def take_photo_and_print_poem():
   # FOR DEBUGGING: print metadata
   #print(metadata)
 
-  # Close camera -- commented out because this can only happen at end of program
-  # picam2.close()
-
   # FOR DEBUGGING: note that image has been saved
-  print('----- SUCCESS: image saved locally')
+  #print('----- SUCCESS: image saved locally')
 
   print_header()
 
@@ -188,7 +185,6 @@ def take_photo_and_print_poem():
 
   # FOR DEBUGGING: upload photo to gcs in a background thread
   #start_upload_thread(bucket_name, photo_filename, destination_blob_name)
-
 
   try:
     # Feed prompt to ChatGPT, to create the poem
@@ -350,13 +346,12 @@ def print_footer():
   printer.println("   .     .     .     .     .   ")
   printer.println("_.` `._.` `._.` `._.` `._.` `._")
   printer.println('\n')
-  printer.println('poetry camera @ runway rna')
-  printer.println('\n')
-  printer.println('more at poetry.camera')
-  #printer.println('a poem by')
-  #printer.println('@poetry.camera')
+  #printer.println('poetry camera @ runway rna')
+  #printer.println('\n')
+  #printer.println('more at poetry.camera')
+  printer.println('a poem by')
+  printer.println('@poetry.camera')
   printer.println('\n\n\n\n\n')
-
 
 ##############
 # POWER BUTTON
@@ -424,38 +419,34 @@ def on_release():
 # KNOB: GET POEM FORMAT
 ################################
 def get_poem_format():
-  poem_format = '8 line free verse. DO NOT EXCEED 4 LINES.'
+  poem_format = '4 line free verse. Do not rhyme. DO NOT EXCEED 4 LINES.'
 
   if knob1.is_pressed:
-    poem_format = '8 line free verse. DO NOT EXCEED 4 LINES.'
+    poem_format = '4 line free verse. Do not rhyme. DO NOT EXCEED 4 LINES.'
   elif knob2.is_pressed:
-    poem_format = 'Modern Sonnet. ABAB, CDCD, EFEF, GG rhyme scheme sonnet. The poem must match the format of a sonnet, but it should be written in modern vernacular englis, it must not be written in olde english'
+    poem_format = 'Modern Sonnet. The poem must match the format of a sonnet, but it should be written in modern vernacular english, it must not be written in olde english.'
   elif knob3.is_pressed:
     poem_format = 'limerick. DO NOT EXCEED 5 LINES.'
   elif knob4.is_pressed:
     poem_format = 'couplet. You must write a poem that is only two lines long. Make sure to incorporate elements from the image. It must be only two lines.'
   elif knob5.is_pressed:
-    # poem_format = 'word mode - instead of writing a poem, invent a word which describes something unique in this scene. Include the word, followed by the definition and etymology'
     poem_format = 'poem where each word begins with the same letter. It must be four lines or less.'
   elif knob6.is_pressed:
-    #poem_format = 'word mode - instead of writing a poem, invent a word which describes something unique in this scene. Include the word, followed by the definition and etymology. In your response, mention that you discovered a new word to describe this scene. Be concise. No yapping.'
-    poem_format = 'Quatrain - four line poem'
+    poem_format = 'poem where each word is a verb. It must be four lines or less.'
   elif knob7.is_pressed:
     poem_format = 'haiku. You must match the 5 syllable, 7 syllable, 5 syllable format. It must not rhyme'
   elif knob8.is_pressed:
-    poem_format = 'Tanka: A japanese form similar to the haiku but longer, with a syllable pattern of: 5, 7, 5, 7, 7'
-  #else:
-    #poem_format = 'limerick. It must only be 5 lines.'
+    poem_format = '8 line rhyming poem. Do not exceed 8 lines.'
   print('----- POEM FORMAT: ' + poem_format)
 
   return poem_format
+
 
 ###############################
 # LISTEN FOR BUTTON PRESS EVENTS
 ################################
 shutter_button.when_pressed = on_press
 shutter_button.when_released = on_release
-
 
 #keeps script alive so the camera functionality keeps running
 signal.pause()
