@@ -430,13 +430,13 @@ def check_internet_connection():
     printer.println("and i am ONLINE!")
     
     # Get the name of the connected Wi-Fi network
-    network_name = subprocess.check_output(['iwgetid', '-r']).decode().strip()
-    if network_name:
-      print(f"Connected to network: {network_name}")
-      printer.println(f"connected to: {network_name}")
-    else:
-      print("Connected to network, but could not retrieve network name.")
-      printer.println("but i can't find the network name.")
+    # network_name = subprocess.check_output(['iwgetid', '-r']).decode().strip()
+    # if network_name:
+    #   print(f"Connected to network: {network_name}")
+    #   printer.println(f"connected to: {network_name}")
+    # else:
+    #   print("Connected to network, but could not retrieve network name.")
+    #   printer.println("but i can't find the network name.")
     
   except subprocess.CalledProcessError:
     print("no internet!")
