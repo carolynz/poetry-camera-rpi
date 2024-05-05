@@ -423,42 +423,28 @@ def check_internet_connection():
   printer.justify('C') # center align header text
   printer.println("hello, i am")
   printer.println("poetry camera")
-  printer.println("\n\n")
-  printer.println("--------------------------------")
-  printer.println("\n\n")
   try:
     # Check for internet connectivity
     subprocess.check_call(['ping', '-c', '1', 'google.com'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     print("WE ARE ONLINE")
+    printer.println("and i am ONLINE!")
     
     # Get the name of the connected Wi-Fi network
     network_name = subprocess.check_output(['iwgetid', '-r']).decode().strip()
     if network_name:
       print(f"Connected to network: {network_name}")
-      printer.println(f"Connected to network: {network_name}")
+      printer.println(f"connected to: {network_name}")
     else:
       print("Connected to network, but could not retrieve network name.")
-      printer.println(f"Connected to network, but could not retrieve network name.")
+      printer.println("but i can't find the network name.")
     
-    # printer.justify('L') # center align header text
-    
-    # printer.println("To change camera settings:")
-    # printer.println("On your phone or computer, connect to this wifi network:")
-    # printer.println("   Network: PoetryCameraSetup")
-    # printer.println("   Password: password")
-    # printer.println("and visit poetrycamera.local in your browser")
-    # printer.println("\n\n\n\n\n")
-      
   except subprocess.CalledProcessError:
     print("no internet!")
-    printer.println("I'm not connected to the internet!")
-    printer.println("I need internet to work!")
-    # printer.println("To connect me to the internet:")
-    # printer.println("On your phone or computer, connect to this wifi network:")
-    # printer.println("   Network: PoetryCameraSetup")
-    # printer.println("   Password: password")
-    # printer.println("and visit poetrycamera.local in your browser")
-    printer.println("\n\n\n\n\n")
+    printer.println("but i'm OFFLINE!")
+    printer.println("i need internet to work!")
+    printer.println('please connect to the PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
+
+  printer.println("\n\n\n\n\n")
 
 ###############################
 # CHECK INTERNET CONNECTION PERIODICALLY, PRINT ERROR MESSAGE IF DISCONNECTED
@@ -475,7 +461,7 @@ def periodic_internet_check(interval):
       # print("Internet connection lost. Please check your network settings.")
       printer.println("\n")
       printer.println(time_string + ": oh no, i lost internet!")
-      printer.println("please connect to PoetryCameraSetup wifi network on your phone to fix me!")
+      printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
       printer.println('\n\n\n\n\n')
     sleep(interval) #makes thread idle during sleep period, freeing up CPU resources
 
