@@ -81,6 +81,7 @@ The important thing is that the thermal printer has a TTL serial connection so y
 If you want your camera to be portable, you'll need some batteries! The Pi requires a steady 5V of power @ 1.2A, while the printer needs 5-9V and draws ~2A while printing.
 
 **Recommended power supply: 6xAA batteries**
+
 It's not the lightest solution, but it's a beginner-friendly starting point.
   - [6 x AA battery holder with DC plug](https://www.adafruit.com/product/248)
   - 6 x AA batteries — rechargeable NiMH batteries (e.g., Eneloop) provide 7.2V, non-rechargeable alkaline batteries (e.g., Duracell) provide 9V. Either works. Of course, don't mix batteries!
@@ -108,56 +109,64 @@ It's not the lightest solution, but it's a beginner-friendly starting point.
 
 Any LED + momentary pushbutton will work for the shutter button. We use the LED as a status indicator for things like ready, loading, etc.
 
-  - [Illuminated pushbutton](https://www.adafruit.com/search?q=16mm%20Panel%20Mount%20Momentary%20Pushbutton)
+  - [Illuminated pushbutton](https://www.adafruit.com/search?q=16mm%20Panel%20Mount%20Momentary%20Pushbutton). This button doesn't have a satisfying click, but the built-in LED also includes resistors, which is convenient.
   - 2 [quick-connect wires](https://www.adafruit.com/product/1152) to easily connect these buttons to the Pi
 
 ### 7. Miscellaneous equipment
   - Wire cutter & stripper
+  - Soldering iron & accessories
   - Jumper cables
 
 ## Software
-- OpenAI account & API key. Each poem costs a couple cents to generate.
+This code currently uses OpenAI's models to turn the image into a poem. It also uses thermal printer drivers from [Adafruit's thermal printer Python library](https://github.com/adafruit/Python-Thermal-Printer).
+
+You'll need to get your own [OpenAI account & API key](https://openai.com/index/openai-api). Each request costs a couple of cents.
 
 Currently, the `main.py` script running on the Pi:
 - Takes a photo when you click the shutter button
-- Sends the photo to GPT-4 to create a poem
-- Receives an AI-generated poem from OpenAI
-- Prints poem out on thermal receipt printer
+- Sends the photo to GPT-4 Vision to caption the photo
+- When we receive the caption, we ask GPT-4 to turn the caption into a poem
+- When we receive the poem, print the poem out on thermal receipt printer
 
-The `Adafruit_Thermal.py` script is [Adafruit's thermal printer Python library](https://github.com/adafruit/Python-Thermal-Printer).
 
-## How to set up
+# Putting it all together
 This was adapted from the following tutorials:
 - [Instant Camera using Raspberry Pi and Thermal Printer](https://learn.adafruit.com/instant-camera-using-raspberry-pi-and-thermal-printer)
 - [Networked Thermal Printer using Raspberry Pi and CUPS](https://learn.adafruit.com/networked-thermal-printer-using-cups-and-raspberry-pi)
 
 ### Part 1. Check that your Raspberry Pi & camera works
-1. Connect your Raspberry Pi to Camera.
+1. Connect your Raspberry Pi to your Camera module.
 
-2. Insert your SD card onto the Pi.
+2. Insert your SD card with a fresh install of any Raspberry Pi OS onto the Pi.
 
-3. Connect your Pi to a monitor. Once it's on, open up the Terminal on your Pi to start making changes.
+3. Connect your Pi to a monitor via mini HDMI.
 
-4. Set up Raspberry Pi hardware to take Camera & Serial inputs:
+5. Plug in power. You should see a green light on the Pi, and a start-up screen on the monitor.
+  
+7. Once the Pi is on, open up the Terminal on your Pi to start making changes.
+
+8. Set up Raspberry Pi hardware to take Camera & Serial inputs:
 ```shell
 sudo raspi-config
 ```
-4. You'll want to adjust the following settings:
+
+9. You'll want to adjust the following settings:
     - Glamor: ON (for Camera setup on newer versions of Raspbian OS)
     - Serial Port ON (lets you access receipt printer inputs)
     - Serial Console OFF (idk what this does)
 
     Restart the system as needed.
 
+[Tutorial TODO: include a basic camera test script & show desired behavior]
 
 ### Part 2. Check that your printer works
-5. Update the system and install requirements. I'm not sure you even need all of these; I can go over these again later and trim out the unnecessary ones.
+1. Update the system and install requirements. I'm not sure you even need all of these; I can go over these again later and trim out the unnecessary ones.
 ```shell
 $ sudo apt-get update
 $ sudo apt-get install git cups build-essential libcups2-dev libcupsimage2-dev python3-serial python-pil python-unidecode
 ```
 
-6. Install some software required to make the Adafruit Thermal Printer work.
+2. Install some software required to make the Adafruit Thermal Printer work.
 ```shell
 $ cd
 $ git clone https://github.com/adafruit/zj-58
@@ -166,20 +175,21 @@ $ make
 $ sudo ./install
 ```
 
-7. Clone this repo, which contains our Poetry Camera software:
+3. Clone this repo, which contains our Poetry Camera software:
 ```shell
 $ cd
 $ git clone https://github.com/carolynz/poetry-camera-rpi.git
 ```
 
-8. Set up your thermal printer, connecting it to power and your Pi. [See diagram and instructions in this tutorial.](https://learn.adafruit.com/networked-thermal-printer-using-cups-and-raspberry-pi/connect-and-configure-printer)
+4. Set up your thermal printer, connecting it to power and your Pi. [See diagram and instructions in this tutorial.](https://learn.adafruit.com/networked-thermal-printer-using-cups-and-raspberry-pi/connect-and-configure-printer)
    Test that it works. Pay attention to your printer's baud rate (e.g. `19200`). We will use this later on.
 
-9. Open our `poetry-camera-rpi` directory:
+5. Open our `poetry-camera-rpi` directory:
 ```shell
 $ cd poetry-camera-rpi
 ```
-10. *If* your printer's baud rate is different from `19200`, open `main.py` and replace that number with your own printer's baud rate:
+
+6. *If* your printer's baud rate is different from `19200`, open `main.py` and replace that number with your own printer's baud rate:
 ```shell
 # main.py:
 
@@ -190,23 +200,41 @@ printer = Adafruit_Thermal('/dev/serial0', 19200, timeout=5)
 [TODO] need a setup script to test that the printer works
 
 ### Part 3. Set up the AI
-[INSTRUCTIONS TO COME]
+1. Set up an OpenAI account and create an API key.
+
+2. Navigate to your directory with the Poetry Camera code and create a `.env` file, which will store sensitive details like your OpenAI API key:
+```nano .env```
+
+3. In the .env, add your API key:
+```OPENAI_API_KEY=pasteyourAPIkeyhere```
+
+[TODO] add an openai test script
+
 
 ### Part 4. Get it working end-to-end
-10. Connect buttons
+[TODO] include wiring diagram
 
-11. Run the poetry camera script.
+1. Connect buttons
+
+2. Run the poetry camera script.
 ```shell
 $ python main.py
 ```
 
-## Part 5. Automatically run the software when the camera turns on
-- Set up a `cron` job to run your python script at startup. First, open your `crontab` file to your default editor:
+3. Check that the shutter button lights up, indicating that the camera is ready to take a picture
+
+4. Click the shutter button and wait for the poem to print out.
+
+[TODO] troubleshooting instructions different common error messages
+
+## Part 5. Automatically run the Poetry Camera code when the camera turns on
+
+1. Set up a `cron` job to run your python script at startup. First, open your `crontab` file to your default editor:
 ```shell
 $ crontab -e
 ```
 
-- Then add the following line to your `crontab`, to run the script when you boot up the computer.
+2 Then add the following line to your `crontab`, to run the script when you boot up the computer.
 ```shell
 # Run poetry camera script at start
 @reboot python /home/pi/poetry-camera-rpi/main.py >> /home/pi/poetry-camera-rpi/errors.txt 2>&1
@@ -221,3 +249,6 @@ Now reboot your camera and wait for the LED light to turn on!
 
 
 ## Part 6. Make the power circuit
+[TODO] clean this up & explain steps :)
+
+<img width="1217" alt="image" src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/dca36686-fcfa-43ba-86f6-155bd1aab0e5">
