@@ -21,7 +21,6 @@ from google.oauth2 import service_account
 #load API keys from .env
 load_dotenv()
 openai_client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
-#REPLICATE_API_TOKEN = os.environ['REPLICATE_API_TOKEN']
 
 #instantiate printer
 baud_rate = 9600 # REPLACE WITH YOUR OWN BAUD RATE
@@ -76,7 +75,6 @@ captioner_system_prompt = "You are an image captioner. You write poetic and accu
 captioner_prompt = "Describe what is happening in this image. What is the subject of this image? Are there any people in it? What do they look like and what are they doing? What is the setting? What time of day or year is it, if you can tell? Are there any other notable features of the image? What emotions might this image evoke? DO NOT mention blurring or out of focus images, just give your best guess as to what is happening. Be concise, no yapping."
 
 
-
 #############################
 # CORE PHOTO-TO-POEM FUNCTION
 #############################
@@ -95,9 +93,6 @@ def take_photo_and_print_poem():
   #photo_filename = directory + 'image_' + timestamp + '.jpg'
   photo_filename = directory + 'image.jpg'
 
-  # FOR DEBUGGING: storage on GCS
-  #bucket_name = 'poetry-camera-images'
-  #destination_blob_name = f'{timestamp}.jpg'
 
   # Take photo & save it
   metadata = picam2.capture_file(photo_filename)
@@ -115,18 +110,6 @@ def take_photo_and_print_poem():
   #########################
   try:
     # Send saved image to API
-    """
-    with open(filename, "rb") as image_file:
-      image_caption = replicate.run(
-        "andreasjansson/blip-2:4b32258c42e9efd4288bb9910bc532a69727f9acd26aa08e175713a0a857a608",
-          input={
-            "image": image_file,
-            "caption": True,
-          })
-
-    print('caption: ', image_caption)
-    """
-
     base64_image = encode_image(photo_filename)
 
     api_key = os.environ['OPENAI_API_KEY']
@@ -182,10 +165,6 @@ def take_photo_and_print_poem():
     camera_at_rest = True
     return
 
-
-  # FOR DEBUGGING: upload photo to gcs in a background thread
-  #start_upload_thread(bucket_name, photo_filename, destination_blob_name)
-
   try:
     # Feed prompt to ChatGPT, to create the poem
     completion = openai_client.chat.completions.create(
@@ -236,42 +215,6 @@ def take_photo_and_print_poem():
 def encode_image(image_path):
   with open(image_path, "rb") as image_file:
     return base64.b64encode(image_file.read()).decode('utf-8')
-
-# upload to gcs FOR DEBUGGING ONLY
-def upload_to_gcs(bucket_name, source_file_name, destination_blob_name):
-  """Uploads a file to the bucket."""
-  try:
-    # The ID of your GCS bucket
-    #bucket_name = "bucket-name-here"
-
-    # The path to your file to upload
-    #source_file_name = "local/path/to/file"
-
-    # The ID to give your GCS blob
-    # destination_blob_name = "storage-object-name"
-
-    # Explicitly use service account credentials by specifying the private key file.
-    # Make sure to replace 'path/to/your/service-account-file.json' with the path to your service account key file.
-    print("trying to upload to gcs")
-    credentials = service_account.Credentials.from_service_account_file(
-      '/home/carolynz/CamTest/gcs-service-account.json')
-
-    storage_client = storage.Client(credentials=credentials)
-    bucket = storage_client.bucket(bucket_name)
-    blob = bucket.blob(destination_blob_name)
-
-    blob.upload_from_filename(source_file_name)
-
-    print(f"File {source_file_name} uploaded to {destination_blob_name}.")
-  except Exception as e:
-    print(f"Failed to upload {source_file_name} to Google Cloud Storage: {e}")
-
-# Function to start the photo upload process in a background thread
-def start_upload_thread(bucket_name, source_file_name, destination_blob_name):
-  upload_thread = threading.Thread(target=upload_to_gcs, args=(bucket_name, source_file_name, destination_blob_name))
-  upload_thread.start()
-  # You can join the thread if you want to wait for it to complete in another part of your program
-  # upload_thread.join()
 
 #######################
 # Generate prompt from caption
