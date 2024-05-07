@@ -11,6 +11,9 @@ wifi_device = "wlan1"
 def index():
     result = subprocess.check_output(["nmcli", "--colors", "no", "-m", "multiline", "--get-value", "SSID", "dev", "wifi", "list", "ifname", wifi_device])
     ssids_list = result.decode().split('\n')
+    # Remove 'PoetryCameraSetup' from the list, that's the camera's own wifi network
+    ssids_list = [ssid for ssid in ssids_list if "PoetryCameraSetup" not in ssid]
+    
     dropdowndisplay = f"""
         <!DOCTYPE html>
         <html>
