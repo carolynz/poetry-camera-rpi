@@ -465,24 +465,22 @@ def periodic_internet_check(interval):
       subprocess.check_call(['ping', '-c', '1', 'google.com'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
       # if we don't have internet, exception will be called      
 
-      # code below runs if we do have internet  
-      # if we were previously disconnected but now have internet, print message
-      if internet_connected == False:
-        print(time_string + ": i'm back online!")
-      internet_connected = True
+      # If previously disconnected but now have internet, print message
+      if not internet_connected:
+        print(time_string + ": I'm back online!")
+        internet_connected = True
 
     # if we don't have internet, exception will be thrown      
     except subprocess.CalledProcessError:
     
       # if we were previously connected but lost internet, print error message
-      if internet_connected == True:
+      if internet_connected:
         print(time_string + ": Internet connection lost. Please check your network settings.")
         printer.println("\n")
         printer.println(time_string + ": oh no, i lost internet!")
         printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
         printer.println('\n\n\n\n\n')
-      
-      internet_connected = False
+        internet_connected = False
     
     except Exception as e:
       print("Error during periodic internet check: ", e)
