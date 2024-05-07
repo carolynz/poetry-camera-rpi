@@ -468,11 +468,10 @@ def periodic_internet_check(interval):
       # code below runs if we do have internet  
       # if we were previously disconnected but now have internet, print message
       if internet_connected == False:
-        print(time_string + ": Detected internet connection restored.")
+        print(time_string + ": i'm back online!")
       internet_connected = True
-      # print("Internet connection is active.")
 
-    # if we don't have internet, exception will be called      
+    # if we don't have internet, exception will be thrown      
     except subprocess.CalledProcessError:
     
       # if we were previously connected but lost internet, print error message
@@ -485,11 +484,14 @@ def periodic_internet_check(interval):
       
       internet_connected = False
     
+    except Exception as e:
+      print("Error during periodic internet check: ", e)
+
     sleep(interval) #makes thread idle during sleep period, freeing up CPU resources
 
 def start_periodic_internet_check():
   # Start the background thread
-  interval = 30  # Check every 30sec
+  interval = 1  # Check every second
   thread = threading.Thread(target=periodic_internet_check, args=(interval,))
   thread.daemon = True  # Daemonize thread
   thread.start()
