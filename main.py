@@ -472,7 +472,7 @@ def periodic_internet_check(interval):
 
     # if we don't have internet, exception will be thrown      
     # except subprocess.CalledProcessError:
-    except (requests.ConnectionError, requests.Timeout, Exception) as e:
+    except (requests.ConnectionError, requests.Timeout) as e:
 
       # if we were previously connected but lost internet, print error message
       if internet_connected:
@@ -483,10 +483,11 @@ def periodic_internet_check(interval):
         printer.println(e)
         printer.println('\n\n\n\n\n')
         internet_connected = False
-    
-    except Exception as e:
-      print("Error during periodic internet check: ", e)
 
+    except Exception as e:
+      print(f"{time_string} Other error: {e}")
+      printer.println(f"{time_string}: idk status, exception: {e}")
+      
     sleep(interval) #makes thread idle during sleep period, freeing up CPU resources
 
 def start_periodic_internet_check():
