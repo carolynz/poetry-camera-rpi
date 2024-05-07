@@ -435,12 +435,12 @@ def check_internet_connection():
     printer.println("and i am ONLINE!")
     
     # Get the name of the connected Wi-Fi network
-    try:
-      network_name = subprocess.check_output(['iwgetid', '-r']).decode().strip()
-      print(f"Connected to network: {network_name}")
-      printer.println(f"connected to: {network_name}")
-    except Exception as e:
-      print("Error while getting network name: ", e)
+    # try:
+    #   network_name = subprocess.check_output(['iwgetid', '-r']).decode().strip()
+    #   print(f"Connected to network: {network_name}")
+    #   printer.println(f"connected to: {network_name}")
+    # except Exception as e:
+    #   print("Error while getting network name: ", e)
     
   except subprocess.CalledProcessError:
     internet_connected = False
@@ -471,14 +471,16 @@ def periodic_internet_check(interval):
         internet_connected = True
 
     # if we don't have internet, exception will be thrown      
-    except subprocess.CalledProcessError:
-    
+    # except subprocess.CalledProcessError:
+    except (requests.ConnectionError, requests.Timeout, Exception) as e:
+
       # if we were previously connected but lost internet, print error message
       if internet_connected:
         print(time_string + ": Internet connection lost. Please check your network settings.")
         printer.println("\n")
         printer.println(time_string + ": oh no, i lost internet!")
-        printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
+        # printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
+        printer.println(e)
         printer.println('\n\n\n\n\n')
         internet_connected = False
     
@@ -489,7 +491,7 @@ def periodic_internet_check(interval):
 
 def start_periodic_internet_check():
   # Start the background thread
-  interval = 1  # Check every second
+  interval = 10  # Check every 10 seconds
   thread = threading.Thread(target=periodic_internet_check, args=(interval,))
   thread.daemon = True  # Daemonize thread
   thread.start()
