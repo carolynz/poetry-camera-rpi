@@ -319,11 +319,10 @@ def print_footer():
   printer.println("   .     .     .     .     .   ")
   printer.println("_.` `._.` `._.` `._.` `._.` `._")
   printer.println('\n')
-  #printer.println('poetry camera @ runway rna')
-  #printer.println('\n')
-  #printer.println('more at poetry.camera')
   printer.println('a poem by')
   printer.println('@poetry.camera')
+  printer.println('\n')
+  printer.println('billion dollar boy x snapchat')
   printer.println('\n\n\n\n\n')
 
 ##############
