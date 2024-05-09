@@ -254,7 +254,7 @@ Now reboot your camera and wait for the LED light to turn on!
 <img width="1217" alt="image" src="https://github.com/carolynz/poetry-camera-rpi/assets/1395087/dca36686-fcfa-43ba-86f6-155bd1aab0e5">
 
 ## Part 7: Change wifi networks on-the-go
-The camera needs wifi to work. You could always hardcode in your mobile hotspot by editing `wpa_supplicant.conf`. If you want to connect to new wifi networks on the fly, just follow this simple tutorial.
+The camera needs wifi to work. You could always hardcode in your mobile hotspot by editing `wpa_supplicant.conf`. If you want to connect to new wifi networks on the fly, just follow [this simple tutorial](https://www.raspberrypi.com/tutorials/host-a-hotel-wifi-hotspot/) with plug-and-play code. (You can auto-run the tutorial's Flask app and our main camera code as two cron jobs at the same time.)
 
 To do the above tutorial, you'll need a second wifi adapter, plugged into your microUSB port. Definitely get a plug-and-play wifi adapter that works for Linux/Raspberry Pi.
 
