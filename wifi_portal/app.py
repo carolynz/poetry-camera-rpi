@@ -9,8 +9,12 @@ wifi_device = "wlan1"
 
 @app.route('/')
 def index():
-    result = subprocess.check_output(["nmcli", "--colors", "no", "-m", "multiline", "--get-value", "SSID", "dev", "wifi", "list", "ifname", wifi_device])
-    ssids_list = result.decode().split('\n')
+    try:
+        result = subprocess.check_output(["nmcli", "--colors", "no", "-m", "multiline", "--get-value", "SSID", "dev", "wifi", "list", "ifname", wifi_device])
+        ssids_list = result.decode().split('\n')
+    except subprocess.CalledProcessError as e:
+        return f"Error: Unable to retrieve WiFi networks. Likely a wifi adapter issue. {e}"
+    
     # Remove 'PoetryCameraSetup' from the list, that's the camera's own wifi network
     ssids_list = [ssid for ssid in ssids_list if "PoetryCameraSetup" not in ssid]
     

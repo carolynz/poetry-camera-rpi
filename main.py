@@ -486,8 +486,11 @@ def periodic_internet_check(interval):
 
     except Exception as e:
       print(f"{time_string} Other error: {e}")
-      printer.println(f"{time_string}: idk status, exception: {e}")
-      
+      # if we were previously connected but lost internet, print error message
+      if internet_connected:
+        printer.println(f"{time_string}: idk status, exception: {e}")
+        internet_connected = False
+
     sleep(interval) #makes thread idle during sleep period, freeing up CPU resources
 
 def start_periodic_internet_check():
