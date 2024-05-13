@@ -25,7 +25,7 @@ You write poetic and accurate descriptions of images so that readers of your cap
 CAPTION_PROMPT = """Describe what is happening in this image. 
 What is the subject of this image? 
 Are there any people in it? 
-What do they look like and what are they doing?
+What do they look like and what are they doing? If their gender is not clear, use gender-neutral pronouns like "they."
 What is the setting? 
 What time of day or year is it, if you can tell? 
 Are there any other notable features of the image? 
@@ -50,8 +50,9 @@ While adhering to the poem format, mention specific details from the provided sc
 The references to the source material must be clear.
 Try to match the vibe of the described scene to the style of the poem (e.g. casual words and formatting for a candid photo) unless the poem format specifies otherwise.
 You do not need to mention the time unless it makes for a better poem.
-Don't use the words 'unspoken' or 'unseen' or 'unheard'. 
-Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.\n\n"""
+Don't use the words 'unspoken' or 'unseen' or 'unheard' or 'untold'. 
+Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.
+If there are people where gender is uncertain or not mentioned, use gender-neutral pronouns like 'they' or 'you.' \n\n"""
 # Poem format (e.g. sonnet, haiku) is set via get_poem_format() below
 
 
@@ -141,45 +142,26 @@ def take_photo_and_print_poem():
   # Send saved image to API
   #########################
   try:
-    # Send saved image to API
     base64_image = encode_image(photo_filename)
 
-    api_key = os.environ['OPENAI_API_KEY']
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
+    # Image to caption
+    caption_response = openai_client.chat.completions.create(
+      model="gpt-4o",
+      messages=[{
+        "role": "system",
+        "content": CAPTION_SYSTEM_PROMPT
+      }, {
+        "role": "user",
+        "content": [
+           {"type": "text", "text": CAPTION_PROMPT},
+           {"type": "image_url", "image_url": {
+             "url": f"data:image/png;base64,{base64_image}"}
+           }]
+      }])
 
-    payload = {
-      "model": "gpt-4-vision-preview",
-      "messages": [
-        {
-          "role": "system",
-          "content": CAPTION_SYSTEM_PROMPT
-        },
-        {
-          "role": "user",
-          "content": [
-            {
-              "type": "text",
-              "text": CAPTION_PROMPT,
-            },
-            {
-              "type": "image_url",
-              "image_url": {
-                "url": f"data:image/jpeg;base64,{base64_image}"
-              }
-            }
-          ]
-        }
-      ],
-      "max_tokens": 300
-    }
-
-    gpt4v_response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-    gpt4v_data = gpt4v_response.json()
-    image_caption = gpt4v_data['choices'][0]['message']['content']
-    print("gpt4v image caption:", image_caption)
+    # extract poem from full API response
+    image_caption = caption_response.choices[0].message.content
+    print("image caption:", image_caption)
 
     # Generate our prompt for GPT
     prompt = generate_prompt(image_caption)
@@ -198,9 +180,9 @@ def take_photo_and_print_poem():
     return
 
   try:
-    # Feed prompt to ChatGPT, to create the poem
-    completion = openai_client.chat.completions.create(
-      model="gpt-4",
+    # Image caption to poem
+    poem_response = openai_client.chat.completions.create(
+      model="gpt-4o",
       messages=[{
         "role": "system",
         "content": POEM_SYSTEM_PROMPT
@@ -210,7 +192,7 @@ def take_photo_and_print_poem():
       }])
 
     # extract poem from full API response
-    poem = completion.choices[0].message.content
+    poem = poem_response.choices[0].message.content
 
   except Exception as e:
     error_message = str(e)
