@@ -55,7 +55,6 @@ Do not be corny or cliche'd or use generic concepts like time, death, love. This
 If there are people where gender is uncertain or not mentioned, use gender-neutral pronouns like 'they' or 'you.' \n\n"""
 # Poem format (e.g. sonnet, haiku) is set via get_poem_format() below
 
-
 def initialize():
   # Load environment variables
   load_dotenv()
@@ -143,56 +142,29 @@ def take_photo_and_print_poem():
   #########################
   try:
     base64_image = encode_image(photo_filename)
+    
+    image_data = f"data:image/png;base64,{base64_image}"
+    print("image data:")
+    print(image_data)
 
-    # Image to caption
-    caption_response = openai_client.chat.completions.create(
-      model="gpt-4o",
-      messages=[{
-        "role": "system",
-        "content": CAPTION_SYSTEM_PROMPT
-      }, {
-        "role": "user",
-        "content": [
-           {"type": "text", "text": CAPTION_PROMPT},
-           {"type": "image_url", "image_url": {
-             "url": f"data:image/png;base64,{base64_image}"}
-           }]
-      }])
+    # Send POST request to API
+    print("sending request...")
+    response = requests.post(
+      "https://poetry-camera-cf.hi-ea7.workers.dev/",
+      json={"image": image_data}
+    )
 
-    # extract poem from full API response
-    image_caption = caption_response.choices[0].message.content
-    print("image caption:", image_caption)
+    # Check if request was successful
+    if response.status_code != 200:
+      raise Exception(f"Request failed with status code {response.status_code}")
 
-    # Generate our prompt for GPT
-    prompt = generate_prompt(image_caption)
+    # Parse JSON response
+    poem_response = response.json()
+    print("poem response:")
+    print(poem_response)
 
-  except Exception as e:
-    error_message = str(e)
-    print("Error during image captioning: ", error_message)
-    print_poem(f"Alas, something went wrong.\n\nTechnical details:\n Error while recognizing image. {error_message}")
-    print_poem("\n\nTroubleshooting:")
-    print_poem("1. Check your wifi connection.")
-    print_poem("2. Try restarting the camera by holding the shutter button for 3 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
-    print_poem("3. You may just need to wait a bit and it will pass.")
-    print_footer()
-    led.on()
-    camera_at_rest = True
-    return
-
-  try:
-    # Image caption to poem
-    poem_response = openai_client.chat.completions.create(
-      model="gpt-4o",
-      messages=[{
-        "role": "system",
-        "content": POEM_SYSTEM_PROMPT
-      }, {
-        "role": "user",
-        "content": prompt
-      }])
-
-    # extract poem from full API response
-    poem = poem_response.choices[0].message.content
+    # Extract poem from full API response
+    poem = poem_response['poem']
 
   except Exception as e:
     error_message = str(e)
