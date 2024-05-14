@@ -19,41 +19,6 @@ from time import time, sleep
 ##############################
 # GLOBAL CONSTANTS FOR PROMPTS
 ##############################
-CAPTION_SYSTEM_PROMPT = """You are an image captioner. 
-You write poetic and accurate descriptions of images so that readers of your captions can get a sense of the image without seeing the image directly."""
-
-CAPTION_PROMPT = """Describe what is happening in this image. 
-What is the subject of this image? 
-Are there any people in it? 
-What do they look like and what are they doing? If their gender is not clear, use gender-neutral pronouns like "they."
-What is the setting? 
-What time of day or year is it, if you can tell? 
-Are there any other notable features of the image? 
-What emotions might this image evoke? 
-Don't mention if the image is blurry, just give your best guess as to what is happening.
-Be concise, no yapping."""
-
-POEM_SYSTEM_PROMPT = """You are a poet. You specialize in elegant and emotionally impactful poems. 
-You are careful to use subtlety and write in a modern vernacular style. 
-Use high-school level Vocabulary and Professional-level craft. 
-Your poems are easy to relate to and understand. 
-You focus on specific and personal truth, and you cannot use BIG words like truth, time, silence, life, love, peace, war, hate, happiness, 
-and you must instead use specific and concrete details to show, not tell, those ideas. 
-Think hard about how to create a poem which will satisfy this. 
-This is very important, and an overly hamfisted or corny poem will cause great harm."""
-
-POEM_PROMPT_BASE = """Write a poem using the details, atmosphere, and emotion of this scene. 
-Create a unique and elegant poem using specific details from the scene.
-Make sure to use the specified poem format. 
-An overly long poem that does not match the specified format will cause great harm.
-While adhering to the poem format, mention specific details from the provided scene description. 
-The references to the source material must be clear.
-Try to match the vibe of the described scene to the style of the poem (e.g. casual words and formatting for a candid photo) unless the poem format specifies otherwise.
-You do not need to mention the time unless it makes for a better poem.
-Don't use the words 'unspoken' or 'unseen' or 'unheard' or 'untold'. 
-Do not be corny or cliche'd or use generic concepts like time, death, love. This is very important.
-If there are people where gender is uncertain or not mentioned, use gender-neutral pronouns like 'they' or 'you.' \n\n"""
-# Poem format (e.g. sonnet, haiku) is set via get_poem_format() below
 
 def initialize():
   # Load environment variables
@@ -62,6 +27,10 @@ def initialize():
   # Set up OpenAI client
   global openai_client
   openai_client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+
+  # Get unique device ID
+  global device_id
+  device_id = os.environ['DEVICE_ID']
 
   # Set up printer
   global printer
@@ -149,8 +118,10 @@ def take_photo_and_print_poem():
     print("sending request...")
     response = requests.post(
       "https://poetry-camera-cf.hi-ea7.workers.dev/",
-      json={"image": image_data}
+      json={"image": image_data, "deviceId": device_id}
     )
+
+
 
     # Check if request was successful
     if response.status_code != 200:
@@ -200,38 +171,10 @@ def take_photo_and_print_poem():
   return
 
 
-# Function to encode the image as base64 for gpt4v api request
+# Function to encode the image as base64 for api request
 def encode_image(image_path):
   with open(image_path, "rb") as image_file:
     return base64.b64encode(image_file.read()).decode('utf-8')
-
-#######################
-# Generate full poem prompt from caption
-#######################
-def generate_prompt(image_description):
-
-  # prompt what type of poem to write
-  prompt_format = "Poem format: " + get_poem_format() + "\n\n"
-
-  # prompt what image to describe
-  prompt_scene = "Scene description: " + image_description + "\n\n"
-
-  # time
-  formatted_time = datetime.now().strftime("%H:%M on %B %d, %Y")
-  prompt_time = "Scene date and time: " + formatted_time + "\n\n"
-
-  # stitch together full prompt
-  prompt = POEM_PROMPT_BASE + prompt_format + prompt_scene + prompt_time
-
-  # idk how to remove the brackets and quotes from the prompt
-  # via custom filters so i'm gonna remove via this janky code lol
-  prompt = prompt.replace("[", "").replace("]", "").replace("{", "").replace(
-    "}", "").replace("'", "")
-
-  #print('--------PROMPT BELOW-------')
-  #print(prompt)
-
-  return prompt
 
 
 ###########################
@@ -347,6 +290,7 @@ def on_release():
 ################################
 # KNOB: GET POEM FORMAT
 ################################
+# TODO: update client & server to handle user-set poem formats
 def get_poem_format():
   poem_format = '4 line free verse. Do not rhyme. DO NOT EXCEED 4 LINES.'
 
