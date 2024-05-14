@@ -142,10 +142,8 @@ def take_photo_and_print_poem():
   #########################
   try:
     base64_image = encode_image(photo_filename)
-    
+    #format for api
     image_data = f"data:image/png;base64,{base64_image}"
-    print("image data:")
-    print(image_data)
 
     # Send POST request to API
     print("sending request...")
@@ -160,11 +158,12 @@ def take_photo_and_print_poem():
 
     # Parse JSON response
     poem_response = response.json()
-    print("poem response:")
+    print("backend response:")
     print(poem_response)
 
-    # Extract poem from full API response
+    # Extract poem & caption from full API response
     poem = poem_response['poem']
+    caption=poem_response['caption']
 
   except Exception as e:
     error_message = str(e)
@@ -181,9 +180,13 @@ def take_photo_and_print_poem():
 
 
   # for debugging prompts
-  print('------ POEM ------')
+
+  print('----- CAPTION -----')
+  print(caption)
+  print('-------------------')
+  print('------ POEM -------')
   print(poem)
-  print('------------------')
+  print('-------------------')
 
   print_poem(poem)
 
