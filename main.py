@@ -12,7 +12,6 @@ from Adafruit_Thermal import *
 from wraptext import *
 from datetime import datetime
 from dotenv import load_dotenv
-from openai import OpenAI
 from time import time, sleep
 
 
@@ -23,10 +22,6 @@ from time import time, sleep
 def initialize():
   # Load environment variables
   load_dotenv()
-
-  # Set up OpenAI client
-  global openai_client
-  openai_client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 
   # Get unique device ID
   global device_id
