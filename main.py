@@ -53,7 +53,9 @@ def initialize():
   shutter_button.when_released = on_release
 
   # Set up knob, if you are using a knob
-  global knob1, knob2, knob3, knob4, knob5, knob6, knob7, knob8
+  global current_knob, knobs
+  knobs = [knob1, knob2, knob3, knob4, knob5, knob6, knob7, knob8]
+
   knob1 = Button(17)
   knob2 = Button(27)
   knob3 = Button(22)
@@ -62,6 +64,8 @@ def initialize():
   knob6 = Button(13)
   knob7 = Button(19)
   knob8 = Button(25)
+
+  get_current_knob()
 
   # Check internet connectivity upon startup
   global internet_connected 
@@ -105,15 +109,20 @@ def take_photo_and_print_poem():
   # Send saved image to API
   #########################
   try:
+    # Encode image as base64
     base64_image = encode_image(photo_filename)
-    #format for api
+    #format into expected string for api
     image_data = f"data:image/png;base64,{base64_image}"
+
+    # Get current knob number
+    global current_knob
+    get_current_knob()
 
     # Send POST request to API
     print("sending request...")
     response = requests.post(
       "https://poetry-camera-cf.hi-ea7.workers.dev/",
-      json={"image": image_data, "deviceId": device_id}
+      json={"image": image_data, "deviceId": device_id, "knob": current_knob}
     )
 
 
@@ -285,29 +294,18 @@ def on_release():
 ################################
 # KNOB: GET POEM FORMAT
 ################################
-# TODO: update client & server to handle user-set poem formats
-def get_poem_format():
-  poem_format = '4 line free verse. Do not rhyme. DO NOT EXCEED 4 LINES.'
+def get_current_knob():
+  global current_knob, knobs
+  current_knob = 0
 
-  if knob1.is_pressed:
-    poem_format = '4 line free verse. Do not rhyme. DO NOT EXCEED 4 LINES.'
-  elif knob2.is_pressed:
-    poem_format = 'Modern Sonnet. The poem must match the format of a sonnet, but it should be written in modern vernacular english, it must not be written in olde english.'
-  elif knob3.is_pressed:
-    poem_format = 'limerick. DO NOT EXCEED 5 LINES.'
-  elif knob4.is_pressed:
-    poem_format = 'couplet. You must write a poem that is only two lines long. Make sure to incorporate elements from the image. It must be only two lines.'
-  elif knob5.is_pressed:
-    poem_format = 'poem where each word begins with the same letter. It must be four lines or less.'
-  elif knob6.is_pressed:
-    poem_format = 'poem where each word is a verb. It must be four lines or less.'
-  elif knob7.is_pressed:
-    poem_format = 'haiku. You must match the 5 syllable, 7 syllable, 5 syllable format. It must not rhyme'
-  elif knob8.is_pressed:
-    poem_format = '8 line rhyming poem. Do not exceed 8 lines.'
-  print('----- POEM FORMAT: ' + poem_format)
+  # set current knob number
+  for i, knob in enumerate(knobs, start=1):
+    if knob.is_pressed:
+      current_knob = i
+      break
+  print('----- CURRENT KNOB: ' + current_knob)
 
-  return poem_format
+  return current_knob
 
 
 ################################
