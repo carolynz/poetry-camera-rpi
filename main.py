@@ -54,7 +54,6 @@ def initialize():
 
   # Set up knob, if you are using a knob
   global current_knob, knobs
-  knobs = [knob1, knob2, knob3, knob4, knob5, knob6, knob7, knob8]
 
   knob1 = Button(17)
   knob2 = Button(27)
@@ -65,6 +64,7 @@ def initialize():
   knob7 = Button(19)
   knob8 = Button(25)
 
+  knobs = [knob1, knob2, knob3, knob4, knob5, knob6, knob7, knob8]
   get_current_knob()
 
   # Check internet connectivity upon startup
@@ -296,14 +296,14 @@ def on_release():
 ################################
 def get_current_knob():
   global current_knob, knobs
-  current_knob = 0
+  current_knob = 1
 
   # set current knob number
   for i, knob in enumerate(knobs, start=1):
     if knob.is_pressed:
       current_knob = i
       break
-  print('----- CURRENT KNOB: ' + current_knob)
+  print('----- CURRENT KNOB: ' + str(current_knob))
 
   return current_knob
 
