@@ -364,24 +364,30 @@ def periodic_internet_check(interval):
         internet_connected = True
 
     # if we don't have internet, exception will be thrown      
-    # except subprocess.CalledProcessError:
-    except (requests.ConnectionError, requests.Timeout) as e:
-
-      # if we were previously connected but lost internet, print error message
-      if internet_connected:
-        print(time_string + ": Internet connection lost. Please check your network settings.")
-        printer.println("\n")
-        printer.println(time_string + ": oh no, i lost internet!")
-        # printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
-        printer.println(e)
-        printer.println('\n\n\n\n\n')
-        internet_connected = False
+    except subprocess.CalledProcessError as e:
+      # HACKY WAY TO AVOID THE RETURN CODE 1 BUG
+      # FIX IT ASAP
+      if e.returncode == 2:
+        # if we were previously connected but lost internet, print error message
+        if internet_connected:
+          print(time_string + ": Internet connection lost. Please check your network settings.")
+          printer.println("\n")
+          printer.println(time_string + ": oh no, i lost internet!")
+          # printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
+          printer.println(e)
+          printer.println('\n\n\n\n\n')
+          internet_connected = False
+      else:
+        # if we encounter return code 1
+        print(f"{time_string} Other error: {e}")
 
     except Exception as e:
       print(f"{time_string} Other error: {e}")
       # if we were previously connected but lost internet, print error message
       if internet_connected:
+        printer.println("\n")
         printer.println(f"{time_string}: idk status, exception: {e}")
+        printer.println('\n\n\n\n\n')
         internet_connected = False
 
     sleep(interval) #makes thread idle during sleep period, freeing up CPU resources
