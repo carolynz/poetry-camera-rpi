@@ -1,6 +1,6 @@
 # from tutorial https://www.raspberrypi.com/tutorials/host-a-hotel-wifi-hotspot/
 
-from flask import Flask,request
+from flask import Flask,request, render_template
 import subprocess
 
 app = Flask(__name__)
@@ -16,38 +16,40 @@ def index():
         return f"Error: Unable to retrieve WiFi networks. Likely a wifi adapter issue. {e}"
     
     # Remove 'PoetryCameraSetup' from the list, that's the camera's own wifi network
-    ssids_list = [ssid for ssid in ssids_list if "PoetryCameraSetup" not in ssid]
+    # ssids_list = [ssid for ssid in ssids_list if "PoetryCameraSetup" not in ssid]
+    ssids_list = [ssid.lstrip("SSID:") for ssid in ssids_list if "PoetryCameraSetup" not in ssid]
     
-    dropdowndisplay = f"""
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Wifi Control</title>
-      </head>
-      <body>
-        <h1>Wifi Control</h1>
-        <form action="/submit" method="post">
-          <label for="ssid">Choose a WiFi network:</label>
-          <select name="ssid" id="ssid">
-      """
-    for ssid in ssids_list:
-      only_ssid = ssid.removeprefix("SSID:")
-      if len(only_ssid) > 0:
-        dropdowndisplay += f'<option value="{only_ssid}">{only_ssid}</option>'
-    dropdowndisplay += """
-        </select>
-        <p/>
-        <label for="manual_ssid">Or Enter SSID:</label>
-        <input type="text" name="manual_ssid" id="manual_ssid"/>
-        <p/>
-        <label for="password">Password: <input type="password" name="password"/></label>
-        <p/>
-        <input type="submit" value="Connect">
-      </form>
-    </body>
-    </html>
-    """
-    return dropdowndisplay
+    # dropdowndisplay = f"""
+    #   <!DOCTYPE html>
+    #   <html>
+    #   <head>
+    #     <title>Wifi Control</title>
+    #   </head>
+    #   <body>
+    #     <h1>Wifi Control</h1>
+    #     <form action="/submit" method="post">
+    #       <label for="ssid">Choose a WiFi network:</label>
+    #       <select name="ssid" id="ssid">
+    #   """
+    # for ssid in ssids_list:
+    #   only_ssid = ssid.removeprefix("SSID:")
+    #   if len(only_ssid) > 0:
+    #     dropdowndisplay += f'<option value="{only_ssid}">{only_ssid}</option>'
+    # dropdowndisplay += """
+    #     </select>
+    #     <p/>
+    #     <label for="manual_ssid">Or Enter SSID:</label>
+    #     <input type="text" name="manual_ssid" id="manual_ssid"/>
+    #     <p/>
+    #     <label for="password">Password: <input type="password" name="password"/></label>
+    #     <p/>
+    #     <input type="submit" value="Connect">
+    #   </form>
+    # </body>
+    # </html>
+    # """
+    # return dropdowndisplay
+    return render_template('index.html', ssids_list=ssids_list)
 
 
 @app.route('/submit',methods=['POST'])

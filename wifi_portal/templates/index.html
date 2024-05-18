@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Wifi Control</title>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+  </head>
+  <body>
+    <h1>Wifi Control</h1>
+    <form action="/submit" method="post">
+      <label for="ssid">Choose a WiFi network:</label>
+      <select name="ssid" id="ssid">
+        {% for ssid in ssids_list %}
+        <option value="{{ ssid }}">{{ ssid }}</option>
+        {% endfor %}
+      </select>
+      <p />
+      <label for="manual_ssid">Or Enter SSID:</label>
+      <input type="text" name="manual_ssid" id="manual_ssid" />
+      <p />
+      <label for="password"
+        >Password: <input type="password" name="password"
+      /></label>
+      <input type="checkbox" id="show_password" />
+      <p />
+      <input type="submit" value="Connect" />
+    </form>
+
+    <script>
+      document
+        .getElementById("show_password")
+        .addEventListener("change", function () {
+          var passwordInput = document.getElementById("password");
+          if (this.checked) {
+            passwordInput.type = "text";
+          } else {
+            passwordInput.type = "password";
+          }
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+/* Apply to all devices */
+input[type="text"],
+input[type="password"],
+select {
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
+}
+
+/* Apply to screens smaller than 600px (typical breakpoint for mobile devices) */
+@media only screen and (max-width: 600px) {
+  input[type="text"],
+  input[type="password"],
+  select {
+    width: 100%;
+  }
+}
