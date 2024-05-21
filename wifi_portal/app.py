@@ -5,12 +5,20 @@
 ###################################################
 import subprocess, os
 
+# Change to the directory of your Git repository
+try:
+    os.chdir('/home/carolynz/CamTest/')
+except Exception as e:
+    print(f"Failed to change directory: {e}")
+
+
 # Get the git commit hash to display on portal -- for beta/debugging
 def get_git_revision_hash():
     try:
 	# get truncated commit hasn (--short)
         return subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip().decode('utf-8')
     except Exception as e:
+        print(f"Failed to get commit hash: {e}")
         return str(e)
 
 # get branch name
@@ -18,6 +26,7 @@ def get_git_branch_name():
     try:
         return subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD']).strip().decode('utf-8')
     except Exception as e:
+        print(f"Failed to get branch name: {e}")
         return str(e)
 
 # Get the date of the latest commit
@@ -25,6 +34,7 @@ def get_git_commit_date():
     try:
         return subprocess.check_output(['git', 'log', '-1', '--format=%cd', '--date=short']).strip().decode('utf-8')
     except Exception as e:
+        print(f"Failed to get commit date: {e}")
         return str(e)
 
 commit_hash = get_git_revision_hash()
