@@ -2,6 +2,9 @@ images/
 smallertest.py
 __pycache__/
 errors.txt
+/wifi_portal/errors.txt
+update.log
+/wifi_portal/current_version.txt
 .env
 gcs-service-account.json
 .DS_Store
