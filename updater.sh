@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# wait 10 sec before starting, just to be safe that existing scripts are up and running
+sleep 10
 
 # Function to check internet connectivity
 check_internet() {
@@ -13,11 +15,13 @@ check_internet() {
 
 # Wait until an internet connection is available
 until check_internet; do
-    echo "Waiting for internet connection..."
+    echo "$(date) - Waiting for internet connection..."
     sleep 5
 done
+
+echo "$(date) - Checking for updates..."
 
 cd /home/carolynz/CamTest
 git pull origin v4-dev  # Adjust branch name if different
 
-echo "Update completed"
+echo "$(date) - Update completed"
