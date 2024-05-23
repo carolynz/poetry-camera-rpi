@@ -19,7 +19,7 @@ from PIL import Image
 ##############################
 # GLOBAL CONSTANTS
 ##############################
-WIFI_QR_IMAGE_PATH = './wifi-qr.jpeg'
+WIFI_QR_IMAGE_PATH = './wifi-qr.bmp'
 
 ###################
 # INITIALIZE
@@ -337,6 +337,7 @@ def check_internet_connection():
     printer.println("and i am ONLINE!")
     printer.println("testing QR code print")
     printer.printImage(WIFI_QR_IMAGE_PATH)
+    #printer.printBitmap(200,200,WIFI_QR_IMAGE_PATH, False)
 
     # Get the name of the connected Wi-Fi network
     # try:
