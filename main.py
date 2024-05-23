@@ -67,6 +67,11 @@ def initialize():
   knobs = [knob1, knob2, knob3, knob4, knob5, knob6, knob7, knob8]
   get_current_knob()
 
+  # Server URL
+  global SERVER_URL
+  SERVER_URL = "https://poetry-camera-cf.hi-ea7.workers.dev/"
+  #SERVER_URL = "https://pc-staging.hi-ea7.workers.dev/"
+
   # Check internet connectivity upon startup
   global internet_connected 
   internet_connected = False
@@ -112,7 +117,7 @@ def take_photo_and_print_poem():
     # Encode image as base64
     base64_image = encode_image(photo_filename)
     #format into expected string for api
-    image_data = f"data:image/png;base64,{base64_image}"
+    image_data = f"data:image/jpeg;base64,{base64_image}"
 
     # Get current knob number
     global current_knob
@@ -121,7 +126,7 @@ def take_photo_and_print_poem():
     # Send POST request to API
     print("sending request...")
     response = requests.post(
-      "https://poetry-camera-cf.hi-ea7.workers.dev/",
+      SERVER_URL,
       json={"image": image_data, "deviceId": device_id, "knob": current_knob}
     )
 
@@ -144,11 +149,11 @@ def take_photo_and_print_poem():
     error_message = str(e)
     print("Error during poem generation: ", error_message)
     print_poem(f"Alas, something went wrong.\n\n.Technical details:\n Error while writing poem. {error_message}")
-    print_poem("\n\nTroubleshooting:")
-    print_poem("1. Check your wifi connection.")
-    print_poem("2. Try restarting the camera by holding the shutter button for 10 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
-    print_poem("3. You may just need to wait a bit and it will pass.")
-    print_footer()
+    #print_poem("\n\nTroubleshooting:")
+    #print_poem("1. Check your wifi connection.")
+    #print_poem("2. Try restarting the camera by holding the shutter button for 10 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
+    #print_poem("3. You may just need to wait a bit and it will pass.")
+    #print_footer()
     led.on()
     camera_at_rest = True
     return
@@ -225,8 +230,6 @@ def print_footer():
   printer.println('\n')
   printer.println('a poem by')
   printer.println('@poetry.camera')
-  printer.println('\n')
-  printer.println('billion dollar boy x snapchat')
   printer.println('\n\n\n\n\n')
 
 ##############
@@ -342,7 +345,7 @@ def check_internet_connection():
     printer.println("i need internet to work!")
     printer.println('connect to PoetryCameraSetup wifi network (pw: "password") on your phone or laptop to fix me!')
 
-  printer.println("\n\n\n\n\n")
+  printer.println("\n\n\n")
 
 ###############################
 # CHECK INTERNET CONNECTION PERIODICALLY, PRINT ERROR MESSAGE IF DISCONNECTED
@@ -375,7 +378,7 @@ def periodic_internet_check(interval):
           printer.println(time_string + ": oh no, i lost internet!")
           # printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
           printer.println(e)
-          printer.println('\n\n\n\n\n')
+          printer.println('\n\n\n')
           internet_connected = False
       else:
         # if we encounter return code 1
@@ -387,7 +390,7 @@ def periodic_internet_check(interval):
       if internet_connected:
         printer.println("\n")
         printer.println(f"{time_string}: idk status, exception: {e}")
-        printer.println('\n\n\n\n\n')
+        printer.println('\n\n\n')
         internet_connected = False
 
     sleep(interval) #makes thread idle during sleep period, freeing up CPU resources
