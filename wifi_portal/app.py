@@ -6,8 +6,13 @@
 import subprocess, os
 
 # Change to the directory of your Git repository
+# NOTE: this means, in order to run the app, you have to use the full path to the app.py file
+# e.g. sudo python /home/pi/CamTest/wifi_portal/app.py
+
+POETRY_CAMERA_DIRECTORY = '/home/carolynz/CamTest/'
+
 try:
-    os.chdir('/home/carolynz/CamTest/')
+    os.chdir(POETRY_CAMERA_DIRECTORY)
 except Exception as e:
     print(f"Failed to change directory: {e}")
 
@@ -43,8 +48,8 @@ commit_date = get_git_commit_date()
 version_info = f"System last updated: {commit_date}\nVersion: {commit_hash}\nBranch: {branch_name}"
 
 # Save the commit hash to a file
-VERSION_FILE_PATH= '/home/carolynz/CamTest/wifi_portal/current_version.txt'
-with open(VERSION_FILE_PATH, 'w') as version_file:
+SOFTWARE_VERSION_FILE_PATH = POETRY_CAMERA_DIRECTORY + 'wifi_portal/current_version.txt'
+with open(SOFTWARE_VERSION_FILE_PATH, 'w') as version_file:
     version_file.write(version_info)
 
 #######################################################
@@ -59,13 +64,14 @@ from flask import Flask, request, render_template
 app = Flask(__name__)
 
 # WIFI_DEVICE specifies internet client (requires separate wifi adapter)
-# default Raspberry Pi wifi client is wlan0, which we have set up as an access point
+# The default Raspberry Pi wifi client is wlan0, but we have set it up as an Access Point
+# wlan1 is the second wifi adapter we have plugged in, to connect to internet
 WIFI_DEVICE = "wlan1"
 
 # get code version info we checked upon startup
 def get_stored_version():
     try:
-        with open(VERSION_FILE_PATH, 'r') as version_file:
+        with open(SOFTWARE_VERSION_FILE_PATH, 'r') as version_file:
             return version_file.read().strip()
     except Exception as e:
         return 'Version: unknown\nBranch: unknown'
@@ -92,7 +98,7 @@ def submit():
     print(*list(request.form.keys()), sep = ", ")
     ssid = request.form['ssid']
     password = request.form['password']
-    connection_command = ["nmcli", "--colors", "no", "device", "wifi", "connect", ssid, "ifname", wifi_device]
+    connection_command = ["nmcli", "--colors", "no", "device", "wifi", "connect", ssid, "ifname", WIFI_DEVICE]
     if len(password) > 0:
       connection_command.append("password")
       connection_command.append(password)
