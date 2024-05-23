@@ -13,12 +13,17 @@ from wraptext import *
 from datetime import datetime
 from dotenv import load_dotenv
 from time import time, sleep
+from PIL import Image
 
 
 ##############################
-# GLOBAL CONSTANTS FOR PROMPTS
+# GLOBAL CONSTANTS
 ##############################
+WIFI_QR_IMAGE_PATH = './wifi-qr.jpeg'
 
+###################
+# INITIALIZE
+###################
 def initialize():
   # Load environment variables
   load_dotenv()
@@ -314,6 +319,7 @@ def get_current_knob():
 ################################
 # CHECK INTERNET CONNECTION
 ################################
+
 # Checks internet connection upon startup
 def check_internet_connection():
   print("Checking internet connection upon startup")
@@ -329,7 +335,9 @@ def check_internet_connection():
     internet_connected = True
     print("i am ONLINE")
     printer.println("and i am ONLINE!")
-    
+    printer.println("testing QR code print")
+    printer.printImage(WIFI_QR_IMAGE_PATH)
+
     # Get the name of the connected Wi-Fi network
     # try:
     #   network_name = subprocess.check_output(['iwgetid', '-r']).decode().strip()
@@ -343,7 +351,9 @@ def check_internet_connection():
     print("no internet!")
     printer.println("but i'm OFFLINE!")
     printer.println("i need internet to work!")
-    printer.println('connect to PoetryCameraSetup wifi network (pw: "password") on your phone or laptop to fix me!')
+    printer.println('scan to fix me:')
+    printer.printImage(WIFI_QR_IMAGE_PATH)
+
 
   printer.println("\n\n\n")
 
@@ -377,7 +387,9 @@ def periodic_internet_check(interval):
           printer.println("\n")
           printer.println(time_string + ": oh no, i lost internet!")
           # printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
-          printer.println(e)
+          printer.println('scan to fix me:')
+          printer.printImage(WIFI_QR_IMAGE_PATH)
+          #printer.println(e)
           printer.println('\n\n\n')
           internet_connected = False
       else:
