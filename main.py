@@ -155,7 +155,7 @@ def take_photo_and_print_poem():
         "content": [
            {"type": "text", "text": CAPTION_PROMPT},
            {"type": "image_url", "image_url": {
-             "url": f"data:image/png;base64,{base64_image}"}
+             "url": f"data:image/jpeg;base64,{base64_image}"}
            }]
       }])
 
@@ -303,8 +303,6 @@ def print_footer():
   printer.println('\n')
   printer.println('a poem by')
   printer.println('@poetry.camera')
-  printer.println('\n')
-  printer.println('billion dollar boy x snapchat')
   printer.println('\n\n\n\n\n')
 
 ##############
@@ -402,7 +400,6 @@ def get_poem_format():
 # Checks internet connection upon startup
 def check_internet_connection():
   print("Checking internet connection upon startup")
-  printer.println("\n")
   printer.justify('C') # center align header text
   printer.println("hello, i am")
   printer.println("poetry camera")
@@ -430,7 +427,7 @@ def check_internet_connection():
     printer.println("i need internet to work!")
     printer.println('connect to PoetryCameraSetup wifi network (pw: "password") on your phone or laptop to fix me!')
 
-  printer.println("\n\n\n\n\n")
+  printer.println("\n\n\n")
 
 ###############################
 # CHECK INTERNET CONNECTION PERIODICALLY, PRINT ERROR MESSAGE IF DISCONNECTED
@@ -462,7 +459,7 @@ def periodic_internet_check(interval):
         printer.println(time_string + ": oh no, i lost internet!")
         # printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
         printer.println(e)
-        printer.println('\n\n\n\n\n')
+        printer.println('\n\n\n')
         internet_connected = False
 
     except Exception as e:
