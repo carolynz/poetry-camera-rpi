@@ -55,6 +55,8 @@ Do not be corny or cliche'd or use generic concepts like time, death, love. This
 If there are people where gender is uncertain or not mentioned, use gender-neutral pronouns like 'they' or 'you.' \n\n"""
 # Poem format (e.g. sonnet, haiku) is set via get_poem_format() below
 
+PROJECT_DIRECTORY = '/home/carolynz/CamTest' # SET TO YOUR OWN PROJECT DIRECTORY -- DO NOT INCLUDE END SLASH
+
 
 def initialize():
   # Load environment variables
@@ -121,11 +123,9 @@ def take_photo_and_print_poem():
   # blink LED in a background thread
   led.blink()
 
-  # FOR DEBUGGING: filename  
-  directory = '/home/carolynz/CamTest/images/'
-  # timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-  #photo_filename = directory + 'image_' + timestamp + '.jpg'
-  photo_filename = directory + 'image.jpg'
+  # Save photo to a local directory (so we can convert it to base64 later)
+  # NOTE: only the latest image is stored; this overwrites any past images.
+  photo_filename = PROJECT_DIRECTORY + '/images/image.jpg'
 
   # Take photo & save it
   metadata = picam2.capture_file(photo_filename)
@@ -170,11 +170,11 @@ def take_photo_and_print_poem():
     error_message = str(e)
     print("Error during image captioning: ", error_message)
     print_poem(f"Alas, something went wrong.\n\nTechnical details:\n Error while recognizing image. {error_message}")
-    print_poem("\n\nTroubleshooting:")
-    print_poem("1. Check your wifi connection.")
-    print_poem("2. Try restarting the camera by holding the shutter button for 3 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
-    print_poem("3. You may just need to wait a bit and it will pass.")
-    print_footer()
+    #print_poem("\n\nTroubleshooting:")
+    #print_poem("1. Check your wifi connection.")
+    #print_poem("2. Try restarting the camera by holding the shutter button for 3 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
+    #print_poem("3. You may just need to wait a bit and it will pass.")
+    #print_footer()
     led.on()
     camera_at_rest = True
     return
@@ -198,11 +198,11 @@ def take_photo_and_print_poem():
     error_message = str(e)
     print("Error during poem generation: ", error_message)
     print_poem(f"Alas, something went wrong.\n\n.Technical details:\n Error while writing poem. {error_message}")
-    print_poem("\n\nTroubleshooting:")
-    print_poem("1. Check your wifi connection.")
-    print_poem("2. Try restarting the camera by holding the shutter button for 10 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
-    print_poem("3. You may just need to wait a bit and it will pass.")
-    print_footer()
+    #print_poem("\n\nTroubleshooting:")
+    #print_poem("1. Check your wifi connection.")
+    #print_poem("2. Try restarting the camera by holding the shutter button for 10 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
+    #print_poem("3. You may just need to wait a bit and it will pass.")
+    #print_footer()
     led.on()
     camera_at_rest = True
     return
@@ -271,14 +271,14 @@ def print_poem(poem):
   printer.println(printable_poem)
 
 
-# print date/time/location header
+# print date/time header
 def print_header():
   # Get current date+time -- will use for printing and file naming
   now = datetime.now()
 
   # Format printed datetime like:
   # Jan 1, 2023
-  # 8:11 PM
+  #   8:11 PM
   printer.justify('C') # center align header text
   date_string = now.strftime('%b %-d, %Y')
   time_string = now.strftime('%-I:%M %p')
@@ -427,7 +427,7 @@ def check_internet_connection():
     printer.println("i need internet to work!")
     printer.println('connect to PoetryCameraSetup wifi network (pw: "password") on your phone or laptop to fix me!')
 
-  printer.println("\n\n\n")
+  printer.println("\n\n\n\n")
 
 ###############################
 # CHECK INTERNET CONNECTION PERIODICALLY, PRINT ERROR MESSAGE IF DISCONNECTED
@@ -448,25 +448,37 @@ def periodic_internet_check(interval):
         print(time_string + ": I'm back online!")
         internet_connected = True
 
-    # if we don't have internet, exception will be thrown      
-    # except subprocess.CalledProcessError:
-    except (requests.ConnectionError, requests.Timeout) as e:
+    # if we don't have internet, exception will be thrown
+    except subprocess.CalledProcessError as e:
 
-      # if we were previously connected but lost internet, print error message
-      if internet_connected:
-        print(time_string + ": Internet connection lost. Please check your network settings.")
-        printer.println("\n")
-        printer.println(time_string + ": oh no, i lost internet!")
-        # printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
-        printer.println(e)
-        printer.println('\n\n\n')
-        internet_connected = False
+      # HACKY WAY TO AVOID THE RETURN CODE 1 BUG
+      # Ping returns code 0 if it pinged a server and received a response back,
+      # Code 1 if it pinged a server and did not receive a response,
+      # And Code 2 for other errors
+      # Afaict it returns code 2 when there's no internet
+      # For some reason this also keeps getting Code 1 even when there is internet
+      # So for now, just print disconnection message when there's Code 2
 
+      if e.returncode == 2:
+        # if we were previously connected but lost internet, print error message
+        if internet_connected:
+          print(f"{time_string}: Internet connection lost. Please check your network settings.")
+          printer.println("\n")
+          printer.println(time_string + ": oh no, i lost internet!")
+          printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
+          printer.println(e)
+          printer.println('\n\n\n\n')
+          internet_connected = False
+        else:
+          # i.e. if we encounter return code 1
+          print(f"{time_string} Other error: {e}")
+    
+    # Catch other exceptions
     except Exception as e:
       print(f"{time_string} Other error: {e}")
       # if we were previously connected but lost internet, print error message
       if internet_connected:
-        printer.println(f"{time_string}: idk status, exception: {e}")
+        printer.println(f"{time_string}: weird wifi status, exception: {e}")
         internet_connected = False
 
     sleep(interval) #makes thread idle during sleep period, freeing up CPU resources
