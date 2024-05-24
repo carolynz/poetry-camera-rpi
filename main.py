@@ -20,6 +20,8 @@ from PIL import Image
 # GLOBAL CONSTANTS
 ##############################
 WIFI_QR_IMAGE_PATH = './wifi-qr.bmp'
+PRINTER_BAUD_RATE = 9600 # REPLACE WITH YOUR OWN BAUD RATE
+PRINTER_HEAT_TIME = 160 #darker prints
 
 ###################
 # INITIALIZE
@@ -34,8 +36,8 @@ def initialize():
 
   # Set up printer
   global printer
-  BAUD_RATE = 9600 # REPLACE WITH YOUR OWN BAUD RATE
-  printer = Adafruit_Thermal('/dev/serial0', BAUD_RATE, timeout=5)
+  printer = Adafruit_Thermal('/dev/serial0', PRINTER_BAUD_RATE, timeout=5)
+  printer.begin(PRINTER_HEAT_TIME)
 
   # Set up camera
   global picam2, camera_at_rest
@@ -320,12 +322,14 @@ def get_current_knob():
 # CHECK INTERNET CONNECTION
 ################################
 
-def printImageDarker(image_path, heat_time=190):
-  if heat_time > 255: #max heat time for printer is 255
-    heat_time = 255
-  printer.begin(heat_time) #190 is a good threshold for printing dark QR codes
-  printer.printImage(image_path)
-  printer.begin() # reset to Adafruit's default heat time (130)
+def printWifiQr():
+  #if heat_time > 255: #max heat time for printer is 255
+  #  heat_time = 255
+  printer.column = 10
+  printer.begin(255) #set heat time to max, for darkest print
+  printer.printImage(WIFI_QR_IMAGE_PATH)
+  printer.begin(PRINTER_HEAT_TIME) # reset heat time
+  printer.column = 0
 
 # Checks internet connection upon startup
 def check_internet_connection():
@@ -342,7 +346,7 @@ def check_internet_connection():
     internet_connected = True
     print("i am ONLINE")
     printer.println("and i am ONLINE!")
-    printImageDarker(WIFI_QR_IMAGE_PATH)
+    printWifiQr()
 
     # Get the name of the connected Wi-Fi network
     # try:
@@ -358,7 +362,7 @@ def check_internet_connection():
     printer.println("but i'm OFFLINE!")
     printer.println("i need internet to work!")
     printer.println('scan to fix me:')
-    printImageDarker(WIFI_QR_IMAGE_PATH)
+    printWifiQr()
 
   printer.println("\n\n\n")
 
@@ -393,7 +397,8 @@ def periodic_internet_check(interval):
           printer.println(time_string + ": oh no, i lost internet!")
           # printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
           printer.println('scan to fix me:')
-          printImageDarker(WIFI_QR_IMAGE_PATH)
+          printWifiQr()
+
           #printer.println(e)
           printer.println('\n\n\n')
           internet_connected = False
