@@ -1,0 +1,27 @@
+/bin/sh: 1: /home/carolynz/CamTest/updater.sh: Permission denied
+/bin/sh: 1: /home/carolynz/CamTest/updater.sh: Permission denied
+error: cannot pull with rebase: You have unstaged changes.
+error: please commit or stash them.
+fatal: unable to access 'https://github.com/carolynz/poetry-camera-rpi.git/': Could not resolve host: github.com
+Waiting for internet connection...
+Waiting for internet connection...
+From https://github.com/carolynz/poetry-camera-rpi
+ * branch            v4-dev     -> FETCH_HEAD
+   9ba617f..80a5996  v4-dev     -> origin/v4-dev
+Rebasing (1/2)Rebasing (2/2)                                                                                Successfully rebased and updated refs/heads/v4-dev.
+Update completed
+Waiting for internet connection...
+Waiting for internet connection...
+From https://github.com/carolynz/poetry-camera-rpi
+ * branch            v4-dev     -> FETCH_HEAD
+   dab7dac..daaa4b8  v4-dev     -> origin/v4-dev
+Updating dab7dac..daaa4b8
+Fast-forward
+ updater.sh | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+Update completed
+Tue 21 May 2024 02:13:07 PM EDT - Checking for updates...
+From https://github.com/carolynz/poetry-camera-rpi
+ * branch            v4-dev     -> FETCH_HEAD
+Already up to date.
+Tue 21 May 2024 02:13:11 PM EDT - Update completed
