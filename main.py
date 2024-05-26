@@ -53,14 +53,23 @@ def initialize():
 
   # Set up printer
   global printer
-  printer = Adafruit_Thermal('/dev/serial0', PRINTER_BAUD_RATE, timeout=5)
-  printer.begin(PRINTER_HEAT_TIME)
+  try:
+    printer = Adafruit_Thermal('/dev/serial0', PRINTER_BAUD_RATE, timeout=5)
+    printer.begin(PRINTER_HEAT_TIME)
+  except Exception as e:
+    print(f"Error while initializing {device_id} printer: {e}")
+    return
 
   # Set up camera
   global picam2, camera_at_rest
-  picam2 = Picamera2()
-  picam2.start()
-  sleep(2) # camera warm-up time
+  try:
+    picam2 = Picamera2()
+    picam2.start()
+    sleep(2) # camera warm-up time
+  except Exception as e:
+    print(f"Error while initializing {device_id} camera: {e}")
+    printer.println("Uh-oh, I can't get camera input. Probably a loose camera cable or broken camera module. Please contact support@poetry.camera to fix.")
+    return
   
   # prevent double-click bugs by checking whether the camera is resting
   # (i.e. not in the middle of the whole photo-to-poem process):
