@@ -21,7 +21,7 @@ from PIL import Image
 ##############################
 WIFI_QR_IMAGE_PATH = './wifi-qr.bmp'
 PRINTER_BAUD_RATE = 9600 # REPLACE WITH YOUR OWN BAUD RATE
-PRINTER_HEAT_TIME = 160 #darker prints
+PRINTER_HEAT_TIME = 190 # darker prints than Adafruit library default (130), max 255
 
 ###################
 # INITIALIZE
@@ -234,10 +234,10 @@ def print_footer():
   printer.justify('C') # center align footer text
   printer.println("   .     .     .     .     .   ")
   printer.println("_.` `._.` `._.` `._.` `._.` `._")
-  printer.println('\n')
+  printer.feed()
   printer.println('a poem by')
   printer.println('@poetry.camera')
-  printer.println('\n\n\n\n\n')
+  printer.feed(4)
 
 ##############
 # POWER BUTTON
@@ -323,18 +323,14 @@ def get_current_knob():
 ################################
 
 def printWifiQr():
-  #if heat_time > 255: #max heat time for printer is 255
-  #  heat_time = 255
-  printer.column = 10
   printer.begin(255) #set heat time to max, for darkest print
   printer.printImage(WIFI_QR_IMAGE_PATH)
   printer.begin(PRINTER_HEAT_TIME) # reset heat time
-  printer.column = 0
 
 # Checks internet connection upon startup
 def check_internet_connection():
   print("Checking internet connection upon startup")
-  printer.println("\n")
+  printer.feed()
   printer.justify('C') # center align header text
   printer.println("hello, i am")
   printer.println("poetry camera")
@@ -346,6 +342,7 @@ def check_internet_connection():
     internet_connected = True
     print("i am ONLINE")
     printer.println("and i am ONLINE!")
+    printer.feed()
     printWifiQr()
 
     # Get the name of the connected Wi-Fi network
@@ -362,9 +359,10 @@ def check_internet_connection():
     printer.println("but i'm OFFLINE!")
     printer.println("i need internet to work!")
     printer.println('scan to fix me:')
+    printer.feed()
     printWifiQr()
 
-  printer.println("\n\n\n")
+  printer.feed(3)
 
 ###############################
 # CHECK INTERNET CONNECTION PERIODICALLY, PRINT ERROR MESSAGE IF DISCONNECTED
@@ -393,14 +391,15 @@ def periodic_internet_check(interval):
         # if we were previously connected but lost internet, print error message
         if internet_connected:
           print(time_string + ": Internet connection lost. Please check your network settings.")
-          printer.println("\n")
+          printer.feed()
           printer.println(time_string + ": oh no, i lost internet!")
           # printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
           printer.println('scan to fix me:')
+          printer.feed()
           printWifiQr()
 
           #printer.println(e)
-          printer.println('\n\n\n')
+          printer.feed(3)
           internet_connected = False
       else:
         # if we encounter return code 1
@@ -410,9 +409,9 @@ def periodic_internet_check(interval):
       print(f"{time_string} Other error: {e}")
       # if we were previously connected but lost internet, print error message
       if internet_connected:
-        printer.println("\n")
+        printer.feed()
         printer.println(f"{time_string}: idk status, exception: {e}")
-        printer.println('\n\n\n')
+        printer.feed(3)
         internet_connected = False
 
     sleep(interval) #makes thread idle during sleep period, freeing up CPU resources
