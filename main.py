@@ -16,19 +16,6 @@ from time import time, sleep
 from PIL import Image
 import sentry_sdk
 
-#######################################################
-# Sentry for error logging & handle uncaught exceptions
-#######################################################
-sentry_sdk.init(
-    dsn="https://5a8f9bfc5cac11b2d20ae3523fe78e0c@o4506033759649792.ingest.us.sentry.io/4507324515418112",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    traces_sample_rate=1.0,
-    # Set profiles_sample_rate to 1.0 to profile 100%
-    # of sampled transactions.
-    # We recommend adjusting this value in production.
-    profiles_sample_rate=1.0,
-)
 
 ##############################
 # GLOBAL CONSTANTS
@@ -41,6 +28,11 @@ PRINTER_HEAT_TIME = 190 # darker prints than Adafruit library default (130), max
 # INITIALIZE
 ###################
 def initialize():
+  # Set up status LED
+  global led
+  led = LED(26)
+  led.blink() # blink LED while setting up
+
   # Load environment variables
   load_dotenv()
 
@@ -48,13 +40,20 @@ def initialize():
   global device_id
   device_id = os.environ['DEVICE_ID']
 
+  # Sentry for error logging & handle uncaught exceptions
+  sentry_sdk.init(
+    dsn="https://5a8f9bfc5cac11b2d20ae3523fe78e0c@o4506033759649792.ingest.us.sentry.io/4507324515418112",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+  )
+
   # Make sure device ID is passed in error logging
   sentry_sdk.set_tag("device_id", device_id)
-
-  # Set up status LED
-  global led
-  led = LED(26)
-  led.blink() # blink LED while setting up
 
   # Set up printer
   global printer
@@ -74,15 +73,19 @@ def initialize():
     sleep(2) # camera warm-up time
   except Exception as e:
     print(f"Error while initializing {device_id} camera: {e}")
-    printer.println("Uh-oh, I can't get camera input. Probably a loose camera cable or broken camera module. Please contact support@poetry.camera to fix.")
+    printer.println("uh-oh, can't get camera input.")
+    printer.println("probably a loose camera cable or broken camera module.")
+    printer.feed()
+    printer.println("support@poetry.camera")
+    printer.feed(3)
     blink_sos_indefinitely()
     return
-  
+
   # prevent double-click bugs by checking whether the camera is resting
   # (i.e. not in the middle of the whole photo-to-poem process):
   camera_at_rest = True
 
-  # Set up shutter button 
+  # Set up shutter button
   global shutter_button
   shutter_button = Button(16)
 
