@@ -44,12 +44,17 @@ def initialize():
   # Load environment variables
   load_dotenv()
 
-  # Get unique device ID
+  # Get unique device ID -- need to do this first for error logging
   global device_id
   device_id = os.environ['DEVICE_ID']
 
   # Make sure device ID is passed in error logging
   sentry_sdk.set_tag("device_id", device_id)
+
+  # Set up status LED
+  global led
+  led = LED(26)
+  led.blink() # blink LED while setting up
 
   # Set up printer
   global printer
@@ -58,6 +63,7 @@ def initialize():
     printer.begin(PRINTER_HEAT_TIME)
   except Exception as e:
     print(f"Error while initializing {device_id} printer: {e}")
+    blink_sos_indefinitely()
     return
 
   # Set up camera
@@ -69,17 +75,16 @@ def initialize():
   except Exception as e:
     print(f"Error while initializing {device_id} camera: {e}")
     printer.println("Uh-oh, I can't get camera input. Probably a loose camera cable or broken camera module. Please contact support@poetry.camera to fix.")
+    blink_sos_indefinitely()
     return
   
   # prevent double-click bugs by checking whether the camera is resting
   # (i.e. not in the middle of the whole photo-to-poem process):
   camera_at_rest = True
 
-  # Set up shutter button & status LED
-  global shutter_button, led
+  # Set up shutter button 
+  global shutter_button
   shutter_button = Button(16)
-  led = LED(26)
-  led.on()
 
   # button event handlers
   shutter_button.when_pressed = on_press
@@ -109,6 +114,10 @@ def initialize():
   global internet_connected 
   internet_connected = False
   check_internet_connection()
+
+  # Turn on LED to indicate setup is complete
+  if internet_connected == True:
+    led.on()
 
   # And periodically check internet in background thread
   start_periodic_internet_check()
@@ -369,7 +378,7 @@ def check_internet_connection():
     print("i am ONLINE")
     printer.println("and i am ONLINE!")
     printer.feed()
-    printWifiQr()
+    # printWifiQr()
 
     # Get the name of the connected Wi-Fi network
     # try:
@@ -393,6 +402,7 @@ def check_internet_connection():
 ###############################
 # CHECK INTERNET CONNECTION PERIODICALLY, PRINT ERROR MESSAGE IF DISCONNECTED
 ###############################
+# NOTE: VERY BUGGY AND STRANGE, LIKELY SOME STATE MANAGEMENT ISSUE
 def periodic_internet_check(interval):
   global internet_connected, camera_at_rest
 
@@ -408,13 +418,16 @@ def periodic_internet_check(interval):
       if not internet_connected:
         print(time_string + ": I'm back online!")
         internet_connected = True
+      
+      led.on()
 
     # if we don't have internet, exception will be thrown      
     except subprocess.CalledProcessError as e:
       # HACKY WAY TO AVOID THE RETURN CODE 1 BUG
       # FIX IT ASAP
       if e.returncode == 2:
-        # if we were previously connected but lost internet, print error message
+        # if we were previously connected but lost internet, print error message & blink LED to indicate waiting status
+        led.blink()
         if internet_connected:
           print(time_string + ": Internet connection lost. Please check your network settings.")
           printer.feed()
@@ -427,12 +440,11 @@ def periodic_internet_check(interval):
           #printer.println(e)
           printer.feed(3)
           internet_connected = False
-      else:
-        # if we encounter return code 1
-        print(f"{time_string} Other error: {e}")
+      else: # if we encounter return code 1
+        print(f"{time_string} Other return code in periodic_internet_check: {e}")
 
     except Exception as e:
-      print(f"{time_string} Other error: {e}")
+      print(f"{time_string} Other exception in periodic_internet_check: {e}")
       # if we were previously connected but lost internet, print error message
       if internet_connected:
         printer.feed()
@@ -444,10 +456,36 @@ def periodic_internet_check(interval):
 
 def start_periodic_internet_check():
   # Start the background thread
-  interval = 10  # Check every 10 seconds
+  interval = 5  # Check every 5 seconds
   thread = threading.Thread(target=periodic_internet_check, args=(interval,))
   thread.daemon = True  # Daemonize thread
   thread.start()
+
+# Error state when something blocks main camera code from running
+# Blink SOS in morse code... the drama!
+def blink_sos_indefinitely():
+  while True:
+    # blink S (3 short blinks)
+    for _ in range(3):
+      led.on()
+      sleep(0.25)
+      led.off()
+      sleep(0.25)
+    sleep(0.25)
+    # blink O (3 long blinks)
+    for _ in range(3):
+      led.on()
+      sleep(0.5)
+      led.off()
+      sleep(0.25)
+    sleep(0.25)
+    # blink S (3 short blinks)
+    for _ in range(3):
+      led.on()
+      sleep(0.25)
+      led.off()
+      sleep(0.25)
+    sleep(1)
 
 # Main function
 if __name__ == "__main__":
