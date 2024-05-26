@@ -14,7 +14,21 @@ from datetime import datetime
 from dotenv import load_dotenv
 from time import time, sleep
 from PIL import Image
+import sentry_sdk
 
+#######################################################
+# Sentry for error logging & handle uncaught exceptions
+#######################################################
+sentry_sdk.init(
+    dsn="https://5a8f9bfc5cac11b2d20ae3523fe78e0c@o4506033759649792.ingest.us.sentry.io/4507324515418112",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
 
 ##############################
 # GLOBAL CONSTANTS
@@ -33,6 +47,9 @@ def initialize():
   # Get unique device ID
   global device_id
   device_id = os.environ['DEVICE_ID']
+
+  # Make sure device ID is passed in error logging
+  sentry_sdk.set_tag("device_id", device_id)
 
   # Set up printer
   global printer
