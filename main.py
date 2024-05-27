@@ -367,7 +367,6 @@ def check_internet_connection():
   print("Checking internet connection upon startup")
   printer.feed()
   printer.justify('C') # center align header text
-  printer.println("hello, i am")
   printer.println("poetry camera")
 
   global internet_connected
@@ -376,7 +375,8 @@ def check_internet_connection():
     subprocess.check_call(['ping', '-c', '1', 'google.com'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     internet_connected = True
     print("i am ONLINE")
-    printer.println("and i am ONLINE!")
+    printer.println("connected to the network!")
+    printer.println("ready to print verse")
     printer.feed()
     # printWifiQr()
 
@@ -391,9 +391,8 @@ def check_internet_connection():
   except subprocess.CalledProcessError:
     internet_connected = False
     print("no internet!")
-    printer.println("but i'm OFFLINE!")
-    printer.println("i need internet to work!")
-    printer.println('scan to fix me:')
+    printer.println("disconnected, offline")
+    printer.println('scan codes to connect:')
     printer.feed()
     printWifiQr()
 
@@ -431,9 +430,10 @@ def periodic_internet_check(interval):
         if internet_connected:
           print(time_string + ": Internet connection lost. Please check your network settings.")
           printer.feed()
-          printer.println(time_string + ": oh no, i lost internet!")
-          # printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
-          printer.println('scan to fix me:')
+          printer.println(time_string)
+          printer.println("lost my internet")
+          printer.println('scan codes to get back online:')
+          printer.println('verses will resume')
           printer.feed()
           printWifiQr()
 
