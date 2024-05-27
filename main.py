@@ -424,6 +424,8 @@ def periodic_internet_check(interval):
       # If previously disconnected but now have internet, print message
       if not internet_connected:
         print(time_string + ": I'm back online!")
+        printer.println('back online / just in time')
+        printer.feed(3)
         internet_connected = True
       
       led.on()
