@@ -381,7 +381,9 @@ def check_internet_connection():
     printer.println("connected to the network")
     printer.println("ready to print verse")
     printer.feed()
-    # printWifiQr()
+    printer.println('step 1:            step 2:')
+    printer.feed()
+    printWifiQr()
 
     # Get the name of the connected Wi-Fi network
     # try:
@@ -396,6 +398,8 @@ def check_internet_connection():
     print("no internet on startup!")
     printer.println("disconnected, offline")
     printer.println('scan codes to connect:')
+    printer.feed()
+    printer.println('step 1:            step 2:')
     printer.feed()
     printWifiQr()
 
