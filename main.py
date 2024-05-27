@@ -377,8 +377,8 @@ def check_internet_connection():
     # Check for internet connectivity
     subprocess.check_call(['ping', '-c', '1', 'google.com'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     internet_connected = True
-    print("i am ONLINE")
-    printer.println("connected to the network!")
+    print("CAMERA ONLINE")
+    printer.println("connected to the network")
     printer.println("ready to print verse")
     printer.feed()
     # printWifiQr()
@@ -393,7 +393,7 @@ def check_internet_connection():
     
   except subprocess.CalledProcessError:
     internet_connected = False
-    print("no internet!")
+    print("no internet on startup!")
     printer.println("disconnected, offline")
     printer.println('scan codes to connect:')
     printer.feed()
@@ -431,7 +431,7 @@ def periodic_internet_check(interval):
         # if we were previously connected but lost internet, print error message & blink LED to indicate waiting status
         led.blink()
         if internet_connected:
-          print(time_string + ": Internet connection lost. Please check your network settings.")
+          print(time_string + ": internet connection lost")
           printer.feed()
           printer.println(time_string)
           printer.println("lost my internet")
@@ -478,7 +478,7 @@ def blink_sos_indefinitely():
     # blink O (3 long blinks)
     for _ in range(3):
       led.on()
-      sleep(0.5)
+      sleep(0.75)
       led.off()
       sleep(0.25)
     sleep(0.25)
