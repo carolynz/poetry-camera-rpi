@@ -399,8 +399,8 @@ def check_internet_connection():
   except subprocess.CalledProcessError:
     internet_connected = False
     print("no internet on startup!")
-    printer.println("disconnected, offline")
-    printer.println('scan codes to connect:')
+    printer.println("offline, disconnected")
+    printer.println('scan codes to connect')
     printer.feed()
     printWifiQr()
 
