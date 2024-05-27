@@ -20,7 +20,8 @@ import sentry_sdk
 ##############################
 # GLOBAL CONSTANTS
 ##############################
-WIFI_QR_IMAGE_PATH = './wifi-qr.bmp'
+PROJECT_DIRECTORY = '/home/carolynz/CamTest/'
+WIFI_QR_IMAGE_PATH = PROJECT_DIRECTORY + 'wifi-qr.bmp'
 PRINTER_BAUD_RATE = 9600 # REPLACE WITH YOUR OWN BAUD RATE
 PRINTER_HEAT_TIME = 190 # darker prints than Adafruit library default (130), max 255
 
@@ -139,7 +140,7 @@ def take_photo_and_print_poem():
   led.blink()
 
   # FOR DEBUGGING: filename  
-  directory = '/home/carolynz/CamTest/images/'
+  directory = PROJECT_DIRECTORY + 'images/'
   # timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
   #photo_filename = directory + 'image_' + timestamp + '.jpg'
   photo_filename = directory + 'image.jpg'
@@ -361,6 +362,8 @@ def get_current_knob():
 ################################
 
 def printWifiQr():
+  printer.println('step 1:            step 2:')
+  printer.feed()
   printer.begin(255) #set heat time to max, for darkest print
   printer.printImage(WIFI_QR_IMAGE_PATH)
   printer.begin(PRINTER_HEAT_TIME) # reset heat time
@@ -399,8 +402,6 @@ def check_internet_connection():
     printer.println("disconnected, offline")
     printer.println('scan codes to connect:')
     printer.feed()
-    printer.println('step 1:            step 2:')
-    printer.feed()
     printWifiQr()
 
   printer.feed(3)
@@ -435,16 +436,14 @@ def periodic_internet_check(interval):
         # if we were previously connected but lost internet, print error message & blink LED to indicate waiting status
         led.blink()
         if internet_connected:
-          print(time_string + ": internet connection lost")
+          print(f"{time_string} internet connection lost: {e}")
           printer.feed()
           printer.println(time_string)
           printer.println("lost my internet")
-          printer.println('scan codes to get back online:')
+          printer.println('scan codes to get back online')
           printer.println('verses will resume')
           printer.feed()
           printWifiQr()
-
-          #printer.println(e)
           printer.feed(3)
           internet_connected = False
       else: # if we encounter return code 1
