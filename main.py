@@ -344,7 +344,7 @@ def on_release():
 ################################
 def get_current_knob():
   global current_knob, knobs
-  current_knob = 1
+  current_knob = 0
 
   # set current knob number
   for i, knob in enumerate(knobs, start=1):
@@ -378,12 +378,12 @@ def check_internet_connection():
     subprocess.check_call(['ping', '-c', '1', 'google.com'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     internet_connected = True
     print("CAMERA ONLINE")
-    printer.println("connected to the network")
+    printer.println("online, connected, awake")
     printer.println("ready to print verse")
-    printer.feed()
-    printer.println('step 1:            step 2:')
-    printer.feed()
-    printWifiQr()
+    #printer.feed()
+    #printer.println('step 1:            step 2:')
+    #printer.feed()
+    #printWifiQr()
 
     # Get the name of the connected Wi-Fi network
     # try:
