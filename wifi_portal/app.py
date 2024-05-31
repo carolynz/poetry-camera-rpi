@@ -1,3 +1,6 @@
+# This Flask app must be run in sudo, with the full path to this file
+# "sudo python /home/USERNAME/PROJECT_DIRECTORY/wifi_portal/app.py"
+
 ###################################################
 # VARIOUS SYSTEM SETUP THINGS
 # - Check current branch & commit hash
@@ -60,7 +63,7 @@ with open(SOFTWARE_VERSION_FILE_PATH, 'w') as version_file:
 # Once you're connected to PoetryCameraSetup wifi, it should pop up automatically
 # If not, navigate to poetrycamera.local in your browser
 #######################################################
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, jsonify
 app = Flask(__name__)
 
 # WIFI_DEVICE specifies internet client (requires separate wifi adapter)
@@ -89,26 +92,49 @@ def index():
     # Remove 'PoetryCameraSetup' from the list, that's the camera's own wifi network
     ssids_list = [ssid.lstrip("SSID:") for ssid in ssids_list if "PoetryCameraSetup" not in ssid]
     
+    # Remove empty strings and duplicates
+    ssids_list = list(set(filter(None, ssids_list)))
+
     return render_template('index.html', ssids_list=ssids_list, version=version_info)
 
 
-@app.route('/submit',methods=['POST'])
+@app.route('/submit', methods=['POST'])
 def submit():
-  if request.method == 'POST':
-    print(*list(request.form.keys()), sep = ", ")
     ssid = request.form['ssid']
     password = request.form['password']
     connection_command = ["nmcli", "--colors", "no", "device", "wifi", "connect", ssid, "ifname", WIFI_DEVICE]
     if len(password) > 0:
-      connection_command.append("password")
-      connection_command.append(password)
+        connection_command.append("password")
+        connection_command.append(password)
     result = subprocess.run(connection_command, capture_output=True)
+    
     if result.stderr:
-        return "Error: failed to connect to wifi network: <i>%s</i>" % result.stderr.decode()
+        stderr_message = result.stderr.decode().lower()
+        if "psk: property is invalid" in stderr_message:
+            return jsonify({"status": "error", "message": "Wrong password"})
+        return jsonify({"status": "error", "message": stderr_message})
     elif result.stdout:
-        return "Success: <i>%s</i>" % result.stdout.decode()
-    return "Error: failed to connect."
-
+        stdout_message = result.stdout.decode().lower()
+        if "successfully activated" in stdout_message:
+            return jsonify({"status": "success", "message": result.stdout.decode()})
+        elif "connection activation failed" in stdout_message:
+            return jsonify({"status": "error", "message": "Connection activation failed."})
+        elif "no network with ssid" in stdout_message:
+            return jsonify({"status": "error", "message": "Could not find a wifi network with this name."})
+        elif "no valid secrets" in stdout_message:
+            return jsonify({"status": "error", "message": "Wrong password"})
+        elif "no suitable device found" in stdout_message:
+            return jsonify({"status": "error", "message": "Could not connect. Possible hardware issue with the wifi adapter."})
+        elif "device not ready" in stdout_message:
+            # TODO: just retry the command like 3 more times
+            return jsonify({"status": "error", "message": "The device is not ready."})
+        elif "invalid password" in stdout_message:
+            return jsonify({"status": "error", "message": "Wrong password"})
+        elif "could not be found or the password is incorrect" in stdout_message:
+            return jsonify({"status": "error", "message": "The password is incorrect or the network could not be found."})
+        else:
+            return jsonify({"status": "error", "message": result.stdout.decode()})
+    return jsonify({"status": "error", "message": "Could not connect. Please try again."})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=80)

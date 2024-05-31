@@ -1,45 +1,93 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Wifi Control</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="{{ url_for('static', filename='styles.css') }}"
-    />
-  </head>
-  <body>
-    <h1>Wifi setup</h1>
-    <!-- TODO: show network that you're currently connected to -->
-    <form action="/submit" method="post">
-      <label for="ssid">Choose a WiFi network:</label>
-      <select name="ssid" id="ssid">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi Setup</title>
+</head>
+<body>
+    <h1>Connect to a WiFi Network</h1>
+    <div id="ssidList">
         {% for ssid in ssids_list %}
-        <option value="{{ ssid }}">{{ ssid }}</option>
+        <div class="ssid" data-ssid="{{ ssid }}">{{ ssid }}</div>
         {% endfor %}
-      </select>
-      <p />
-      <label for="password"
-        >Password: <input type="password" name="password" id="password"
-      /></label>
-      <p>
-        <input type="checkbox" id="show_password" /> <span>show password</span>
-      </p>
-      <input type="submit" value="Connect" />
-    </form>
-    <p>{{ version }}</p>
+    </div>
+    <div id="message"></div>
+
+    <!-- The Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <form id="passwordForm">
+                <label for="password">Password:</label>
+                <input type="password" name="password" id="password" />
+                <p>
+                    <input type="checkbox" id="show_password" /> <span>Show password</span>
+                </p>
+                <input type="button" value="Submit" id="submitPassword" />
+                <input type="hidden" name="ssid" id="selectedSSID" />
+            </form>
+        </div>
+    </div>
+
     <script>
-      document
-        .getElementById("show_password")
-        .addEventListener("change", function () {
-          var passwordInput = document.getElementById("password");
-          if (this.checked) {
-            passwordInput.type = "text";
-          } else {
-            passwordInput.type = "password";
-          }
+        document.querySelectorAll('.ssid').forEach(item => {
+            item.addEventListener('click', function () {
+                var modal = document.getElementById('passwordModal');
+                var ssid = this.getAttribute('data-ssid');
+                document.getElementById('selectedSSID').value = ssid;
+                modal.style.display = 'block';
+            });
+        });
+
+        document.getElementsByClassName('close')[0].onclick = function() {
+            var modal = document.getElementById('passwordModal');
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            var modal = document.getElementById('passwordModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        document.getElementById('show_password').addEventListener('change', function () {
+            var passwordInput = document.getElementById('password');
+            if (this.checked) {
+                passwordInput.type = 'text';
+            } else {
+                passwordInput.type = 'password';
+            }
+        });
+
+        document.getElementById('submitPassword').addEventListener('click', function () {
+            var ssid = document.getElementById('selectedSSID').value;
+            var password = document.getElementById('password').value;
+
+            var formData = new FormData();
+            formData.append('ssid', ssid);
+            formData.append('password', password);
+
+            fetch('/submit', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                var messageDiv = document.getElementById('message');
+                messageDiv.textContent = data.message;
+                messageDiv.style.color = data.status === 'success' ? 'green' : 'red';
+
+                var modal = document.getElementById('passwordModal');
+                modal.style.display = 'none';
+            })
+            .catch(error => {
+                var messageDiv = document.getElementById('message');
+                messageDiv.textContent = 'An error occurred: ' + error;
+                messageDiv.style.color = 'red';
+            });
         });
     </script>
-  </body>
+</body>
 </html>
