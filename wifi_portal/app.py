@@ -63,6 +63,7 @@ with open(SOFTWARE_VERSION_FILE_PATH, 'w') as version_file:
 # Once you're connected to PoetryCameraSetup wifi, it should pop up automatically
 # If not, navigate to poetrycamera.local in your browser
 #######################################################
+import json, threading, time
 from flask import Flask, request, render_template, jsonify
 app = Flask(__name__)
 
@@ -71,6 +72,10 @@ app = Flask(__name__)
 # wlan1 is the second wifi adapter we have plugged in, to connect to internet
 WIFI_DEVICE = "wlan1"
 
+
+config_file = POETRY_CAMERA_DIRECTORY + "wifi_portal/hotspot_config.json"
+
+
 # get code version info we checked upon startup
 def get_stored_version():
     try:
@@ -78,6 +83,49 @@ def get_stored_version():
             return version_file.read().strip()
     except Exception as e:
         return 'Version: unknown\nBranch: unknown'
+
+# Function to load hotspot configuration
+def load_hotspot_config():
+    try:
+        with open(config_file, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+# Function to save hotspot configuration
+def save_hotspot_config(ssid, password = None):
+    if password:
+        config = {
+            "ssid": ssid,
+            "password": password
+        }
+    else:
+        config = {
+            "ssid": ssid
+        }
+    with open(config_file, 'w') as f:
+        json.dump(config, f)
+
+# Function to attempt connecting to the saved hotspot
+def attempt_connect_hotspot(ssid, password = None):
+    """
+    config = load_hotspot_config()
+    if not config:
+        return "No hotspot configuration found."
+    
+    ssid = config.get("ssid")
+    password = config.get("password")
+    """
+    connection_command = ["nmcli", "--colors", "no", "device", "wifi", "connect", ssid]
+    if password:
+        connection_command.extend(["password", password])
+        
+    result = subprocess.run(connection_command, capture_output=True)
+    if result.stderr:
+        return f"Error: {result.stderr.decode()}"
+    elif result.stdout:
+        return f"Success: {result.stdout.decode()}"
+    return "Unknown error."
 
 # screen where you set wifi password
 @app.route('/')
@@ -92,10 +140,13 @@ def index():
     # Remove 'PoetryCameraSetup' from the list, that's the camera's own wifi network
     ssids_list = [ssid.lstrip("SSID:") for ssid in ssids_list if "PoetryCameraSetup" not in ssid]
     
-    # Remove empty strings and duplicates
-    ssids_list = list(set(filter(None, ssids_list)))
 
-    return render_template('index.html', ssids_list=ssids_list, version=version_info)
+    # TODO: why does the network name list sometimes drop first letter????
+
+    # Remove empty strings and duplicates
+    unique_ssids_list = list(set(filter(None, ssids_list)))
+
+    return render_template('index.html', ssids_list=unique_ssids_list, version=version_info)
 
 
 @app.route('/submit', methods=['POST'])
@@ -135,6 +186,27 @@ def submit():
         else:
             return jsonify({"status": "error", "message": result.stdout.decode()})
     return jsonify({"status": "error", "message": "Could not connect. Please try again."})
+
+@app.route('/save_and_connect', methods=['POST'])
+def save_and_connect():
+    manual_ssid = request.form['manual_ssid']
+    manual_password = request.form['manual_password']
+    save_hotspot_config(manual_ssid, manual_password)
+    
+    def hotspot_scanning():
+        end_time = time.time() + 120  # Run for 2 minutes
+        while time.time() < end_time:
+            result = attempt_connect_hotspot()
+            print(result)  # Log the result, can be changed to more sophisticated logging
+            if "Success" in result:
+                break
+            time.sleep(5)
+    
+    threading.Thread(target=hotspot_scanning).start()
+    return f"Attempting to connect to the {manual_ssid} network. If you are using a hotspot, go to your hotspot settings page and leave it open so it can connect. This could take up to 2 minutes."
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=80)

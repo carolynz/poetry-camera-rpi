@@ -2,8 +2,9 @@ images/
 smallertest.py
 __pycache__/
 errors.txt
-/wifi_portal/errors.txt
 update.log
+/wifi_portal/errors.txt
+/wifi_portal/hotspot_config.json
 /wifi_portal/current_version.txt
 .env
 gcs-service-account.json
