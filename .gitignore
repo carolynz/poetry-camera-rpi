@@ -3,7 +3,7 @@ smallertest.py
 __pycache__/
 errors.txt
 update.log
-device_setings.json
+device_settings.json
 /wifi_portal/errors.txt
 /wifi_portal/hotspot_config.json
 /wifi_portal/current_version.txt
