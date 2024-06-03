@@ -4,7 +4,7 @@
 # Capture a JPEG while still running in the preview mode. When you
 # capture to a file, the return value is the metadata for that image.
 
-import requests, signal, os, base64, subprocess, threading
+import requests, signal, os, base64, subprocess, threading, json
 from picamera2 import Picamera2, Preview
 from libcamera import controls
 from gpiozero import LED, Button
@@ -273,16 +273,21 @@ def print_header():
 def print_footer():
   # Load device configuration
   device_settings = load_json_config(DEVICE_SETTINGS_PATH)
-  
-  
+  # Get the footer from the configuration, defaulting to an empty string if not found
+  footer = device_settings.get("footer", None)
 
-  
   printer.justify('C') # center align footer text
   printer.println("   .     .     .     .     .   ")
   printer.println("_.` `._.` `._.` `._.` `._.` `._")
   printer.feed()
   printer.println('a poem by')
   printer.println('@poetry.camera')
+
+  # Print the footer if it exists
+  if footer:
+    printer.feed()
+    printer.println(footer)
+
   printer.feed(4)
 
 ##############
