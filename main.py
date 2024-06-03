@@ -4,61 +4,99 @@
 # Capture a JPEG while still running in the preview mode. When you
 # capture to a file, the return value is the metadata for that image.
 
-import requests, signal, os, base64, subprocess, threading
+import requests, signal, os, base64, subprocess, threading, json
 from picamera2 import Picamera2, Preview
 from libcamera import controls
 from gpiozero import LED, Button
 from Adafruit_Thermal import *
-from wraptext import *
+from helpers import * # text wrapping, file handling, etc
 from datetime import datetime
 from dotenv import load_dotenv
-from openai import OpenAI
 from time import time, sleep
+from PIL import Image
+import sentry_sdk
 
 
 ##############################
-# GLOBAL CONSTANTS FOR PROMPTS
+# GLOBAL CONSTANTS
 ##############################
+PROJECT_DIRECTORY = '/home/carolynz/CamTest/'
+WIFI_QR_IMAGE_PATH = PROJECT_DIRECTORY + 'wifi-qr.bmp'
+DEVICE_SETTINGS_PATH = PROJECT_DIRECTORY + 'device_settings.json'
+PRINTER_BAUD_RATE = 9600 # REPLACE WITH YOUR OWN BAUD RATE
+PRINTER_HEAT_TIME = 190 # darker prints than Adafruit library default (130), max 255
 
+###################
+# INITIALIZE
+###################
 def initialize():
+  # Set up status LED
+  global led
+  led = LED(26)
+  led.blink() # blink LED while setting up
+
   # Load environment variables
   load_dotenv()
 
-  # Set up OpenAI client
-  global openai_client
-  openai_client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
-
-  # Get unique device ID
+  # Get unique device ID -- need to do this first for error logging
   global device_id
   device_id = os.environ['DEVICE_ID']
 
+  # Sentry for error logging & handle uncaught exceptions
+  sentry_sdk.init(
+    dsn="https://5a8f9bfc5cac11b2d20ae3523fe78e0c@o4506033759649792.ingest.us.sentry.io/4507324515418112",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+  )
+
+  # Make sure device ID is passed in error logging
+  sentry_sdk.set_tag("device_id", device_id)
+
   # Set up printer
   global printer
-  BAUD_RATE = 9600 # REPLACE WITH YOUR OWN BAUD RATE
-  printer = Adafruit_Thermal('/dev/serial0', BAUD_RATE, timeout=5)
+  try:
+    printer = Adafruit_Thermal('/dev/serial0', PRINTER_BAUD_RATE, timeout=5)
+    printer.begin(PRINTER_HEAT_TIME)
+  except Exception as e:
+    print(f"Error while initializing {device_id} printer: {e}")
+    blink_sos_indefinitely()
+
 
   # Set up camera
   global picam2, camera_at_rest
-  picam2 = Picamera2()
-  picam2.start()
-  sleep(2) # camera warm-up time
-  
+  try:
+    picam2 = Picamera2()
+    picam2.start()
+    sleep(2) # camera warm-up time
+  except Exception as e:
+    print(f"Error while initializing {device_id} camera: {e}")
+    printer.println("uh-oh, can't get camera input.")
+    printer.println("probably a loose camera cable or broken camera module.")
+    printer.feed()
+    printer.println("support@poetry.camera")
+    printer.feed(3)
+    blink_sos_indefinitely()
+
   # prevent double-click bugs by checking whether the camera is resting
   # (i.e. not in the middle of the whole photo-to-poem process):
   camera_at_rest = True
 
-  # Set up shutter button & status LED
-  global shutter_button, led
+  # Set up shutter button
+  global shutter_button
   shutter_button = Button(16)
-  led = LED(26)
-  led.on()
 
   # button event handlers
   shutter_button.when_pressed = on_press
   shutter_button.when_released = on_release
 
   # Set up knob, if you are using a knob
-  global knob1, knob2, knob3, knob4, knob5, knob6, knob7, knob8
+  global current_knob, knobs
+
   knob1 = Button(17)
   knob2 = Button(27)
   knob3 = Button(22)
@@ -68,10 +106,22 @@ def initialize():
   knob7 = Button(19)
   knob8 = Button(25)
 
+  knobs = [knob1, knob2, knob3, knob4, knob5, knob6, knob7, knob8]
+  get_current_knob()
+
+  # Server URL
+  global SERVER_URL
+  SERVER_URL = "https://poetry-camera-cf.hi-ea7.workers.dev/"
+  #SERVER_URL = "https://pc-staging.hi-ea7.workers.dev/"
+
   # Check internet connectivity upon startup
   global internet_connected 
   internet_connected = False
   check_internet_connection()
+
+  # Turn on LED to indicate setup is complete
+  if internet_connected == True:
+    led.on()
 
   # And periodically check internet in background thread
   start_periodic_internet_check()
@@ -90,7 +140,7 @@ def take_photo_and_print_poem():
   led.blink()
 
   # FOR DEBUGGING: filename  
-  directory = '/home/carolynz/CamTest/images/'
+  directory = PROJECT_DIRECTORY + 'images/'
   # timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
   #photo_filename = directory + 'image_' + timestamp + '.jpg'
   photo_filename = directory + 'image.jpg'
@@ -110,15 +160,20 @@ def take_photo_and_print_poem():
   # Send saved image to API
   #########################
   try:
+    # Encode image as base64
     base64_image = encode_image(photo_filename)
-    #format for api
-    image_data = f"data:image/png;base64,{base64_image}"
+    #format into expected string for api
+    image_data = f"data:image/jpeg;base64,{base64_image}"
+
+    # Get current knob number
+    global current_knob
+    get_current_knob()
 
     # Send POST request to API
     print("sending request...")
     response = requests.post(
-      "https://poetry-camera-cf.hi-ea7.workers.dev/",
-      json={"image": image_data, "deviceId": device_id}
+      SERVER_URL,
+      json={"image": image_data, "deviceId": device_id, "knob": current_knob}
     )
 
 
@@ -139,12 +194,9 @@ def take_photo_and_print_poem():
   except Exception as e:
     error_message = str(e)
     print("Error during poem generation: ", error_message)
-    print_poem(f"Alas, something went wrong.\n\n.Technical details:\n Error while writing poem. {error_message}")
-    print_poem("\n\nTroubleshooting:")
-    print_poem("1. Check your wifi connection.")
-    print_poem("2. Try restarting the camera by holding the shutter button for 10 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
-    print_poem("3. You may just need to wait a bit and it will pass.")
-    print_footer()
+    print_poem("Oops, something went wrong, but it's not your fault. Maybe a wifi issue?")
+    print_poem("support@poetry.camera")
+    printer.feed(3)
     led.on()
     camera_at_rest = True
     return
@@ -215,15 +267,24 @@ def print_header():
 
 # print footer
 def print_footer():
+  # Load device configuration
+  device_settings = load_json_config(DEVICE_SETTINGS_PATH)
+  # Get the footer from the configuration, defaulting to an empty string if not found
+  footer = device_settings.get("footer", None)
+
   printer.justify('C') # center align footer text
   printer.println("   .     .     .     .     .   ")
   printer.println("_.` `._.` `._.` `._.` `._.` `._")
-  printer.println('\n')
+  printer.feed()
   printer.println('a poem by')
   printer.println('@poetry.camera')
-  printer.println('\n')
-  printer.println('billion dollar boy x snapchat')
-  printer.println('\n\n\n\n\n')
+
+  # Print the footer if it exists
+  if footer:
+    printer.feed()
+    printer.println(footer)
+
+  printer.feed(4)
 
 ##############
 # POWER BUTTON
@@ -290,40 +351,36 @@ def on_release():
 ################################
 # KNOB: GET POEM FORMAT
 ################################
-# TODO: update client & server to handle user-set poem formats
-def get_poem_format():
-  poem_format = '4 line free verse. Do not rhyme. DO NOT EXCEED 4 LINES.'
+def get_current_knob():
+  global current_knob, knobs
+  current_knob = 0
 
-  if knob1.is_pressed:
-    poem_format = '4 line free verse. Do not rhyme. DO NOT EXCEED 4 LINES.'
-  elif knob2.is_pressed:
-    poem_format = 'Modern Sonnet. The poem must match the format of a sonnet, but it should be written in modern vernacular english, it must not be written in olde english.'
-  elif knob3.is_pressed:
-    poem_format = 'limerick. DO NOT EXCEED 5 LINES.'
-  elif knob4.is_pressed:
-    poem_format = 'couplet. You must write a poem that is only two lines long. Make sure to incorporate elements from the image. It must be only two lines.'
-  elif knob5.is_pressed:
-    poem_format = 'poem where each word begins with the same letter. It must be four lines or less.'
-  elif knob6.is_pressed:
-    poem_format = 'poem where each word is a verb. It must be four lines or less.'
-  elif knob7.is_pressed:
-    poem_format = 'haiku. You must match the 5 syllable, 7 syllable, 5 syllable format. It must not rhyme'
-  elif knob8.is_pressed:
-    poem_format = '8 line rhyming poem. Do not exceed 8 lines.'
-  print('----- POEM FORMAT: ' + poem_format)
+  # set current knob number
+  for i, knob in enumerate(knobs, start=1):
+    if knob.is_pressed:
+      current_knob = i
+      break
+  print('----- CURRENT KNOB: ' + str(current_knob))
 
-  return poem_format
+  return current_knob
 
 
 ################################
 # CHECK INTERNET CONNECTION
 ################################
+
+def printWifiQr():
+  printer.println('step 1:            step 2:')
+  printer.feed()
+  printer.begin(255) #set heat time to max, for darkest print
+  printer.printImage(WIFI_QR_IMAGE_PATH)
+  printer.begin(PRINTER_HEAT_TIME) # reset heat time
+
 # Checks internet connection upon startup
 def check_internet_connection():
   print("Checking internet connection upon startup")
-  printer.println("\n")
+  printer.feed()
   printer.justify('C') # center align header text
-  printer.println("hello, i am")
   printer.println("poetry camera")
 
   global internet_connected
@@ -331,9 +388,14 @@ def check_internet_connection():
     # Check for internet connectivity
     subprocess.check_call(['ping', '-c', '1', 'google.com'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     internet_connected = True
-    print("i am ONLINE")
-    printer.println("and i am ONLINE!")
-    
+    print("CAMERA ONLINE")
+    printer.println("online, connected, awake")
+    printer.println("ready to print verse")
+    #printer.feed()
+    #printer.println('step 1:            step 2:')
+    #printer.feed()
+    #printWifiQr()
+
     # Get the name of the connected Wi-Fi network
     # try:
     #   network_name = subprocess.check_output(['iwgetid', '-r']).decode().strip()
@@ -344,16 +406,18 @@ def check_internet_connection():
     
   except subprocess.CalledProcessError:
     internet_connected = False
-    print("no internet!")
-    printer.println("but i'm OFFLINE!")
-    printer.println("i need internet to work!")
-    printer.println('connect to PoetryCameraSetup wifi network (pw: "password") on your phone or laptop to fix me!')
+    print("no internet on startup!")
+    printer.println("offline, disconnected")
+    printer.println('scan codes to connect')
+    printer.feed()
+    printWifiQr()
 
-  printer.println("\n\n\n\n\n")
+  printer.feed(3)
 
 ###############################
 # CHECK INTERNET CONNECTION PERIODICALLY, PRINT ERROR MESSAGE IF DISCONNECTED
 ###############################
+# NOTE: VERY BUGGY AND STRANGE, LIKELY SOME STATE MANAGEMENT ISSUE
 def periodic_internet_check(interval):
   global internet_connected, camera_at_rest
 
@@ -368,37 +432,80 @@ def periodic_internet_check(interval):
       # If previously disconnected but now have internet, print message
       if not internet_connected:
         print(time_string + ": I'm back online!")
+        printer.println('back online!')
+        printer.feed(3)
         internet_connected = True
+      
+      led.on()
 
     # if we don't have internet, exception will be thrown      
-    # except subprocess.CalledProcessError:
-    except (requests.ConnectionError, requests.Timeout) as e:
-
-      # if we were previously connected but lost internet, print error message
-      if internet_connected:
-        print(time_string + ": Internet connection lost. Please check your network settings.")
-        printer.println("\n")
-        printer.println(time_string + ": oh no, i lost internet!")
-        # printer.println('please connect to PoetryCameraSetup wifi network (pw: "password") on your phone to fix me!')
-        printer.println(e)
-        printer.println('\n\n\n\n\n')
-        internet_connected = False
+    except subprocess.CalledProcessError as e:
+      # HACKY WAY TO AVOID THE RETURN CODE 1 BUG
+      # FIX IT ASAP
+      if e.returncode == 2:
+        # if we were previously connected but lost internet, print error message & blink LED to indicate waiting status
+        led.blink()
+        if internet_connected:
+          print(f"{time_string} internet connection lost: {e}")
+          printer.feed()
+          printer.println(time_string)
+          printer.println("lost my internet")
+          printer.println('scan codes to get back online')
+          printer.println('verses will resume')
+          printer.feed()
+          printWifiQr()
+          printer.feed(3)
+          internet_connected = False
+      else: # if we encounter return code 1
+        print(f"{time_string} Other return code in periodic_internet_check: {e}")
 
     except Exception as e:
-      print(f"{time_string} Other error: {e}")
+      print(f"{time_string} Other exception in periodic_internet_check: {e}")
       # if we were previously connected but lost internet, print error message
       if internet_connected:
+        printer.feed()
         printer.println(f"{time_string}: idk status, exception: {e}")
+        printer.feed(3)
         internet_connected = False
 
     sleep(interval) #makes thread idle during sleep period, freeing up CPU resources
 
 def start_periodic_internet_check():
   # Start the background thread
-  interval = 10  # Check every 10 seconds
+  interval = 5  # Check every 5 seconds
   thread = threading.Thread(target=periodic_internet_check, args=(interval,))
   thread.daemon = True  # Daemonize thread
   thread.start()
+
+# Error state when something blocks main camera code from running
+# Blink SOS in morse code... the drama!
+def blink_sos_indefinitely():
+  def blinker():
+    while True:
+      # blink S (3 short blinks)
+      for _ in range(3):
+        led.on()
+        sleep(0.25)
+        led.off()
+        sleep(0.25)
+      sleep(0.25)
+      # blink O (3 long blinks)
+      for _ in range(3):
+        led.on()
+        sleep(0.75)
+        led.off()
+        sleep(0.25)
+      sleep(0.25)
+      # blink S (3 short blinks)
+      for _ in range(3):
+        led.on()
+        sleep(0.25)
+        led.off()
+        sleep(0.25)
+      sleep(1)
+
+  #start blinker in background thread
+  threading.Thread(target=blinker).start()
 
 # Main function
 if __name__ == "__main__":

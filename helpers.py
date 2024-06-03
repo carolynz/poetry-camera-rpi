@@ -1,3 +1,26 @@
+#############################
+# Manage json files
+#############################
+import json
+import os
+
+def load_json_config(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, "r") as file:
+            return json.load(file)
+    return {}
+
+def update_json_config(file_path, new_data):
+    config = load_json_config(file_path)
+    config.update(new_data)
+
+    with open(file_path, "w") as file:
+        json.dump(config, file, indent=4)
+
+
+#############################
+# Wrap text nicely in printer
+#############################
 # 'text' is the input string to wrap
 # 'line_length' is the max # characters per line
 def wrap_text(text, line_length):
