@@ -65,7 +65,7 @@ def initialize():
   except Exception as e:
     print(f"Error while initializing {device_id} printer: {e}")
     blink_sos_indefinitely()
-    return
+
 
   # Set up camera
   global picam2, camera_at_rest
@@ -81,7 +81,6 @@ def initialize():
     printer.println("support@poetry.camera")
     printer.feed(3)
     blink_sos_indefinitely()
-    return
 
   # prevent double-click bugs by checking whether the camera is resting
   # (i.e. not in the middle of the whole photo-to-poem process):
@@ -195,12 +194,9 @@ def take_photo_and_print_poem():
   except Exception as e:
     error_message = str(e)
     print("Error during poem generation: ", error_message)
-    print_poem(f"Alas, something went wrong.\n\n.Technical details:\n Error while writing poem. {error_message}")
-    #print_poem("\n\nTroubleshooting:")
-    #print_poem("1. Check your wifi connection.")
-    #print_poem("2. Try restarting the camera by holding the shutter button for 10 seconds, waiting for it to shut down, unplugging power, and plugging it back in.")
-    #print_poem("3. You may just need to wait a bit and it will pass.")
-    #print_footer()
+    print_poem("Oops, something went wrong, but it's not your fault. Maybe a wifi issue?")
+    print_poem("support@poetry.camera")
+    printer.feed(3)
     led.on()
     camera_at_rest = True
     return
@@ -436,7 +432,7 @@ def periodic_internet_check(interval):
       # If previously disconnected but now have internet, print message
       if not internet_connected:
         print(time_string + ": I'm back online!")
-        printer.println('back online / just in time')
+        printer.println('back online!')
         printer.feed(3)
         internet_connected = True
       
@@ -484,28 +480,32 @@ def start_periodic_internet_check():
 # Error state when something blocks main camera code from running
 # Blink SOS in morse code... the drama!
 def blink_sos_indefinitely():
-  while True:
-    # blink S (3 short blinks)
-    for _ in range(3):
-      led.on()
+  def blinker():
+    while True:
+      # blink S (3 short blinks)
+      for _ in range(3):
+        led.on()
+        sleep(0.25)
+        led.off()
+        sleep(0.25)
       sleep(0.25)
-      led.off()
+      # blink O (3 long blinks)
+      for _ in range(3):
+        led.on()
+        sleep(0.75)
+        led.off()
+        sleep(0.25)
       sleep(0.25)
-    sleep(0.25)
-    # blink O (3 long blinks)
-    for _ in range(3):
-      led.on()
-      sleep(0.75)
-      led.off()
-      sleep(0.25)
-    sleep(0.25)
-    # blink S (3 short blinks)
-    for _ in range(3):
-      led.on()
-      sleep(0.25)
-      led.off()
-      sleep(0.25)
-    sleep(1)
+      # blink S (3 short blinks)
+      for _ in range(3):
+        led.on()
+        sleep(0.25)
+        led.off()
+        sleep(0.25)
+      sleep(1)
+
+  #start blinker in background thread
+  threading.Thread(target=blinker).start()
 
 # Main function
 if __name__ == "__main__":
