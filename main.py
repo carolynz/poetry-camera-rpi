@@ -9,7 +9,7 @@ from picamera2 import Picamera2, Preview
 from libcamera import controls
 from gpiozero import LED, Button
 from Adafruit_Thermal import *
-from wraptext import *
+from helpers import * # text wrapping, file handling, etc
 from datetime import datetime
 from dotenv import load_dotenv
 from time import time, sleep
@@ -22,6 +22,7 @@ import sentry_sdk
 ##############################
 PROJECT_DIRECTORY = '/home/carolynz/CamTest/'
 WIFI_QR_IMAGE_PATH = PROJECT_DIRECTORY + 'wifi-qr.bmp'
+DEVICE_SETTINGS_PATH = PROJECT_DIRECTORY + 'device_settings.json'
 PRINTER_BAUD_RATE = 9600 # REPLACE WITH YOUR OWN BAUD RATE
 PRINTER_HEAT_TIME = 190 # darker prints than Adafruit library default (130), max 255
 
@@ -270,6 +271,12 @@ def print_header():
 
 # print footer
 def print_footer():
+  # Load device configuration
+  device_settings = load_json_config(DEVICE_SETTINGS_PATH)
+  
+  
+
+  
   printer.justify('C') # center align footer text
   printer.println("   .     .     .     .     .   ")
   printer.println("_.` `._.` `._.` `._.` `._.` `._")
