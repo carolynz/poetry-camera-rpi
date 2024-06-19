@@ -57,6 +57,16 @@ def initialize():
   # Make sure device ID is passed in error logging
   sentry_sdk.set_tag("device_id", device_id)
 
+  # Set up shutter button
+  global shutter_button
+  shutter_button = Button(16)
+
+  # button event handlers
+  # putting this at the top so that any camera init issues (where we enter indefinite blinking mode)
+  # don't prevent press-and-hold to shut down
+  shutter_button.when_pressed = on_press
+  shutter_button.when_released = on_release
+
   # Set up printer
   global printer
   try:
@@ -81,18 +91,11 @@ def initialize():
     printer.println("support@poetry.camera")
     printer.feed(3)
     blink_sos_indefinitely()
+    #return #commenting out return bc otherwise an invalid camera leads to undefined other vars -- logic is garbage
 
   # prevent double-click bugs by checking whether the camera is resting
   # (i.e. not in the middle of the whole photo-to-poem process):
   camera_at_rest = True
-
-  # Set up shutter button
-  global shutter_button
-  shutter_button = Button(16)
-
-  # button event handlers
-  shutter_button.when_pressed = on_press
-  shutter_button.when_released = on_release
 
   # Set up knob, if you are using a knob
   global current_knob, knobs
@@ -417,48 +420,63 @@ def periodic_internet_check(interval):
     now = datetime.now()
     time_string = now.strftime('%-I:%M %p')
     try:
-      # Check for internet connectivity
-      subprocess.check_call(['ping', '-c', '1', 'google.com'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-      # if we don't have internet, exception will be called      
+      # Ping 5 packets to check for internet connection
+      # (Previous attempts to ping 1 packet have been very lossy in some environments)
+      #ping_result = subprocess.check_call(['ping', '-c', '5', 'google.com'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+      ping_result = subprocess.run(['ping', '-c', '5', 'google.com'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      #print(f"ping_result: {ping_result}")
 
-      # If previously disconnected but now have internet, print message
-      if not internet_connected:
-        print(time_string + ": I'm back online!")
-        printer.println('back online!')
-        printer.feed(3)
-        internet_connected = True
-      
-      led.on()
-
-    # if we don't have internet, exception will be thrown      
-    except subprocess.CalledProcessError as e:
-      # HACKY WAY TO AVOID THE RETURN CODE 1 BUG
-      # FIX IT ASAP
-      if e.returncode == 2:
-        # if we were previously connected but lost internet, print error message & blink LED to indicate waiting status
-        led.blink()
-        if internet_connected:
-          print(f"{time_string} internet connection lost: {e}")
-          printer.feed()
-          printer.println(time_string)
-          printer.println("lost my internet")
-          printer.println('scan codes to get back online')
-          printer.println('verses will resume')
-          printer.feed()
-          printWifiQr()
+      # If all pings are successful, we definitely have internet
+      if ping_result.returncode == 0:
+        print("all pings successful, we have internet")
+        # If previously disconnected but now have internet, print message
+        if not internet_connected:
+          print(time_string + ": I'm back online!")
+          printer.println('back online!')
           printer.feed(3)
-          internet_connected = False
-      else: # if we encounter return code 1
-        print(f"{time_string} Other return code in periodic_internet_check: {e}")
+          internet_connected = True
+          # LED on to indicate camera is ready -- should probably wrap this in a separate fxn with internet_connected=True
+          led.on()
 
+      else:
+	# If ping failed, attempt HTTP connection
+        # Sometimes networks drop `ping` packets but HTTP connections still work
+        # We only print out an error message if both pings AND HTTP requests fail
+        print("pings failed, trying to connect to google.com")
+        try:
+          requests.get("http://www.google.com", timeout=5)
+          print("connected to google.com, we are online")
+
+          if not internet_connected:
+            print(f"{time_string} internet reconnected via HTTP check")
+            internet_connected = True
+            led.on()
+
+        # If *both* ping and HTTP failed, we are definitely offline
+        # So we should print an error message when the state changes like this
+        except requests.ConnectionError:
+          print("both ping & http failed, we are def offline")
+          # If we were previously connected but now lost connection
+          if internet_connected:
+            internet_connected = False
+            led.blink()
+            print(f"{time_string} internet connection lost")
+            # Print error message to printer (assuming printer object is initialized)
+            printer.feed()
+            printer.println(time_string)
+            printer.println("lost my internet")
+            printer.println('scan codes to get back online')
+            printer.println('verses will resume')
+            printer.feed()
+            printWifiQr()
+            printer.feed(3)
     except Exception as e:
-      print(f"{time_string} Other exception in periodic_internet_check: {e}")
-      # if we were previously connected but lost internet, print error message
-      if internet_connected:
-        printer.feed()
-        printer.println(f"{time_string}: idk status, exception: {e}")
-        printer.feed(3)
-        internet_connected = False
+      print(f"{time_string} Exception in periodic_internet_check: {e}")
+      #if internet_connected:
+      #  printer.feed()
+      #  printer.println(f"{time_string}: idk status, exception: {e}")
+      #  printer.feed(3)
+      #  internet_connected = False
 
     sleep(interval) #makes thread idle during sleep period, freeing up CPU resources
 

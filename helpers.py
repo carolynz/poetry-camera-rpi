@@ -1,8 +1,7 @@
 #############################
 # Manage json files
 #############################
-import json
-import os
+import json, os, base64
 
 def load_json_config(file_path):
     if os.path.exists(file_path):
