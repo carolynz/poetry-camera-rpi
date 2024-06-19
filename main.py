@@ -176,8 +176,6 @@ def take_photo_and_print_poem():
       json={"image": image_data, "deviceId": device_id, "knob": current_knob}
     )
 
-
-
     # Check if request was successful
     if response.status_code != 200:
       raise Exception(f"Request failed with status code {response.status_code}")
@@ -221,12 +219,6 @@ def take_photo_and_print_poem():
   camera_at_rest = True
 
   return
-
-
-# Function to encode the image as base64 for api request
-def encode_image(image_path):
-  with open(image_path, "rb") as image_file:
-    return base64.b64encode(image_file.read()).decode('utf-8')
 
 
 ###########################
