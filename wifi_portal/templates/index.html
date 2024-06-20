@@ -9,16 +9,20 @@
     <h1>Wifi setup</h1>
 
     <!-- current connection status -->
-    <div id="status">
-        <div id="status-icon">
+    <div id="status-section">
+        <div id="status-indicator">
              <img src="{% if internet_status == 'online' %}{{ online_icon }}{% elif internet_status == 'offline' %}{{ offline_icon }}{% else %}{{ loading_icon }}{% endif %}" alt="Status Icon">
+             <p>
+             {% if internet_status == 'online' %}
+                 {{ ssid }}
+             {% elif internet_status == 'offline' %}
+                 Offline
+             {% else %}
+                 Loading...
+             {% endif %}
+             </p>
         </div>
-        <p>
-           {% if internet_status == 'online' %}
-               (Connected to {{ ssid }})
-           {% endif %}
-        </p>
-        <button id="refresh-button">Refresh</button>
+        <button id="refresh-status-button">Refresh</button>
     </div>
 
     <!-- connect to a new wifi network -->
@@ -60,16 +64,16 @@
 
         // Function to render connection status
         function renderStatus(status, ssid="") {
-            const statusDiv = document.getElementById("status");
+            const statusIndicatorDiv = document.getElementById("status-indicator");
             let statusHtml = '';
             if (status === "online") {
-                statusHtml = `<img src="{{ online_icon }}" alt="Online">${ssid}`;
+                statusHtml = `<img src="{{ online_icon }}" alt="Online"><p>${ssid}</p>`;
             } else if (status === "offline") {
-                statusHtml = `<img src="{{ offline_icon }}" alt="Offline">Offline`;
+                statusHtml = `<img src="{{ offline_icon }}" alt="Offline"><p>Offline</p>`;
             } else {
-                statusHtml = `<img src="{{ loading_icon }}" alt="Loading...">Loading...`;
+                statusHtml = `<img src="{{ loading_icon }}" alt="Loading..."><p>Loading...</p>`;
             }
-            statusDiv.innerHTML = statusHtml;
+            statusIndicatorDiv.innerHTML = statusHtml;
         }
 
 
@@ -85,7 +89,8 @@
          .catch(error => {
               renderStatus("offline", "");
               const statusDiv = document.getElementById("status");
-              statusDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+              // TODO: DISPLAY THIS ERROR MESSAGE SOMEWHERE USEFUL
+              //statusDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
           });
       }
 

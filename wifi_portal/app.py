@@ -140,9 +140,9 @@ def attempt_connect_hotspot(ssid, password = None):
     password = config.get("password")
     """
     connection_command = ["nmcli", "--colors", "no", "device", "wifi", "connect", ssid]
-    if password:
+    if password and len(password) > 0:
         connection_command.extend(["password", password])
-        
+
     result = subprocess.run(connection_command, capture_output=True)
     if result.stderr:
         return f"Error: {result.stderr.decode()}"
@@ -252,7 +252,7 @@ def save_and_connect():
     def hotspot_scanning():
         end_time = time.time() + 120  # Run for 2 minutes
         while time.time() < end_time:
-            result = attempt_connect_hotspot()
+            result = attempt_connect_hotspot(manual_ssid, manual_password)
             print(result)  # Log the result, can be changed to more sophisticated logging
             if "Success" in result:
                 break
