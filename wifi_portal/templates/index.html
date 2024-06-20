@@ -7,10 +7,18 @@
 </head>
 <body>
     <h1>Wifi setup</h1>
+
+    <!-- current connection status -->
     <div id="status">
-        <p>Status: Loading...</p>
+        <p>Status: {{ internet_status }} 
+           {% if internet_status == 'online' %}
+               (Connected to {{ ssid }})
+           {% endif %}
+        </p>
+        <button id="refresh-button">Refresh</button>
     </div>
-    <!-- TODO: show network that you're currently connected to -->
+
+    <!-- connect to a new wifi network -->
     <form action="/submit" method="post">
       <label for="ssid">Choose a WiFi network:</label>
       <select name="ssid" id="ssid">
@@ -30,8 +38,8 @@
 
     <p id="connect-result"></p>
 
-
-    <h2>Manual Hotspot Entry</h2>
+    <!-- for hidden networks -->
+    <h2>Network not listed? Add here</h2>
     <form id="manual-form" action="/save_and_connect" method="post">
       <label for="manual-ssid">SSID:</label>
       <input type="text" name="manual_ssid" id="manual-ssid" value="{{ manual_ssid }}" />
@@ -46,82 +54,72 @@
 
     <p>{{ version }}</p>
     <script>
-      // show password for the top field
-      // TODO: when the checkbox is checked before the user types in the password, 
-      // show the password as plaintext
-      // or just never start with the box checked
 
-      document
-        .getElementById("show-password")
-        .addEventListener("change", function () {
-          var passwordInput = document.getElementById("password");
-          if (this.checked) {
-            passwordInput.type = "text";
-          } else {
-            passwordInput.type = "password";
-          }
-        });
+      // Function to check connection status and display at top of page
+      function updateStatus() {
+          fetch("/status")
+          .then(response => response.json())
+          .then(data => {
+               const statusDiv = document.getElementById("status");
+               if (data.status === "online") {
+                    statusDiv.innerHTML = `<p style="color: green;">Status: Online (Connected to ${data.ssid})</p>`;
+               } else {
+                    statusDiv.innerHTML = `<p style="color: red;">Status: Offline</p>`;
+               }
+          })
+         .catch(error => {
+              const statusDiv = document.getElementById("status");
+              statusDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+          });
+      }
 
-      // show password for the manual field
-      document.getElementById("show-manual-password").addEventListener("change", function () {
-        var passwordInput = document.getElementById("manual-password");
-        passwordInput.type = this.checked ? "text" : "password";
-      });
 
-      // handle form submission and render results on the page
+      // Function to handle form submission
+      function handleFormSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            fetch("/submit", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById("connect-result");
+                if (data.status === "success") {
+                    resultDiv.innerHTML = `<p style="color: green;">${data.message}</p>`;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">${data.message}</p>`;
+                }
+            })
+            .catch(error => {
+                const resultDiv = document.getElementById("connect-result");
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            });
+        }
+
+      // call the functions when DOM is loaded
       document.addEventListener("DOMContentLoaded", function() {
             const form = document.querySelector("form");
-            form.addEventListener("submit", function(event) {
-                event.preventDefault();
-                const formData = new FormData(form);
-                fetch("/submit", {
-                    method: "POST",
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    const resultDiv = document.getElementById("connect-result");
-                    if (data.status === "success") {
-                        resultDiv.innerHTML = `<p style="color: green;">Success! Connected</p>`;
-                    } else {
-                        resultDiv.innerHTML = `<p style="color: red;">${data.message}</p>`;
-                    }
-                })
-                .catch(error => {
-                    const resultDiv = document.getElementById("result");
-                    resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
-                });
+            form.addEventListener("submit", handleFormSubmit);
+
+
+	    // Show/hide password toggle for password field
+            document.getElementById("show-password").addEventListener("change", function () {
+                var passwordInput = document.getElementById("password");
+                passwordInput.type = this.checked ? "text" : "password";
+            });	
+
+
+	    // Show/hide password toggle for manual password field
+            document.getElementById("show-manual-password").addEventListener("change", function () {
+                var passwordInput = document.getElementById("manual-password");
+                passwordInput.type = this.checked ? "text" : "password";
             });
 
-            // Function to check connection status and display at top of page
-            function updateStatus() {
-                fetch("/status")
-                .then(response => response.json())
-                .then(data => {
-                    const statusDiv = document.getElementById("status");
-                    if (data.status === "online") {
-                        statusDiv.innerHTML = `<p style="color: green;">Status: Online (Connected to ${data.ssid})</p>`;
-                    //} else if (data.status === "offline") {
-                    //    statusDiv.innerHTML = `<p style="color: red;">Status: Offline</p>`;
-                    } else {
-                        statusDiv.innerHTML = `<p style="color: red;">Status: Offline</p>`;
-                    }
-                })
-                .catch(error => {
-                    const statusDiv = document.getElementById("status");
-                    statusDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
-                });
-            }
+            // Check connection status again when you click refresh button
+            document.getElementById("refresh-button").addEventListener("click", updateStatus);
 
-            // Poll for connection status every 2 seconds
-            setInterval(updateStatus, 2000);
-
-            // Check connection status when page loads
-            updateStatus();
-
-      });
-      
-
+      });      
     </script>
 </body>
 </html>

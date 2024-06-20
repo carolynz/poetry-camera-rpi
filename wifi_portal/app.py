@@ -106,6 +106,29 @@ def save_hotspot_config(ssid, password = None):
     with open(config_file, 'w') as f:
         json.dump(config, f)
 
+# Get current network status
+def get_network_status():
+    internet_status = "offline"
+    ssid = ""
+    
+    try:
+        # Retrieve the SSID
+        ssid_result = subprocess.run(
+            ['nmcli', '-t', '-f', 'device,active,ssid', 'device', 'wifi'], 
+            capture_output=True
+        )
+        ssid_output = ssid_result.stdout.decode().strip().split('\n')
+        for line in ssid_output:
+            if line.startswith(f"{WIFI_DEVICE}:yes:"):
+                ssid = line.split(":")[2]
+                internet_status = "online"
+                break
+    except Exception as e:
+        print(f"Exception in get_network_status: {e}")
+    
+    return internet_status, ssid
+
+
 # Function to attempt connecting to the saved hotspot
 def attempt_connect_hotspot(ssid, password = None):
     """
@@ -145,7 +168,14 @@ def index():
     # Remove empty strings and duplicates
     unique_ssids_list = list(set(filter(None, ssids_list)))
 
-    return render_template('index.html', ssids_list=unique_ssids_list, version=version_info)
+    # Get the current network status
+    internet_status, ssid = get_network_status()
+
+    return render_template('index.html',
+      ssids_list=unique_ssids_list,
+      version=version_info,
+      internet_status=internet_status,
+      ssid=ssid)
 
 
 @app.route('/submit', methods=['POST'])
@@ -211,29 +241,8 @@ def save_and_connect():
 # check for connectivity status
 @app.route('/status')
 def status():
-  internet_status = "offline"
-  ssid = ""
-
-  try:
-    # Try to get the SSID of active network via Network Manager (not pinging)
-    # If no active network listed, we will assume device is offline / this code doesn't run
-    ssid_result = subprocess.run(
-      ['nmcli', '-t', '-f', 'device,active,ssid', 'device', 'wifi'], 
-      capture_output=True
-    )
-    ssid_output = ssid_result.stdout.decode().strip().split('\n')
-    for line in ssid_output:
-      if line.startswith(f"{WIFI_DEVICE}:yes:"):
-        ssid = line.split(":")[2]
-        internet_status = "online"
-        break
-    print(f"status: {internet_status}, ssid: {ssid}")
+    internet_status, ssid = get_network_status()
     return jsonify({"status": internet_status, "ssid": ssid})
-
-  # catch exceptions, i.e. subprocess doesn't have enough memory to run
-  except Exception as e:
-    print("exception in /status")
-    return jsonify({"status": "offline", "ssid": ""})
 
 
 if __name__ == '__main__':
