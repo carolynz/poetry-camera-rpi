@@ -64,7 +64,7 @@ with open(SOFTWARE_VERSION_FILE_PATH, 'w') as version_file:
 # If not, navigate to poetrycamera.local in your browser
 #######################################################
 import json, threading, time
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, url_for
 app = Flask(__name__)
 
 # WIFI_DEVICE specifies internet client (requires separate wifi adapter)
@@ -106,6 +106,29 @@ def save_hotspot_config(ssid, password = None):
     with open(config_file, 'w') as f:
         json.dump(config, f)
 
+# Get current network status
+def get_network_status():
+    internet_status = "offline"
+    ssid = ""
+    
+    try:
+        # Retrieve the SSID
+        ssid_result = subprocess.run(
+            ['nmcli', '-t', '-f', 'device,active,ssid', 'device', 'wifi'], 
+            capture_output=True
+        )
+        ssid_output = ssid_result.stdout.decode().strip().split('\n')
+        for line in ssid_output:
+            if line.startswith(f"{WIFI_DEVICE}:yes:"):
+                ssid = line.split(":")[2]
+                internet_status = "online"
+                break
+    except Exception as e:
+        print(f"Exception in get_network_status: {e}")
+    
+    return internet_status, ssid
+
+
 # Function to attempt connecting to the saved hotspot
 def attempt_connect_hotspot(ssid, password = None):
     """
@@ -117,9 +140,9 @@ def attempt_connect_hotspot(ssid, password = None):
     password = config.get("password")
     """
     connection_command = ["nmcli", "--colors", "no", "device", "wifi", "connect", ssid]
-    if password:
+    if password and len(password) > 0:
         connection_command.extend(["password", password])
-        
+
     result = subprocess.run(connection_command, capture_output=True)
     if result.stderr:
         return f"Error: {result.stderr.decode()}"
@@ -138,15 +161,33 @@ def index():
         return f"Error: Unable to retrieve WiFi networks. Likely a wifi adapter issue. {e}"
     
     # Remove 'PoetryCameraSetup' from the list, that's the camera's own wifi network
-    ssids_list = [ssid.lstrip("SSID:") for ssid in ssids_list if "PoetryCameraSetup" not in ssid]
-    
-
-    # TODO: why does the network name list sometimes drop first letter????
+    # And remove the prefix "SSID:" from networks in the list
+    # (We expect the ssids_list to look like: ["SSID:network1", "SSID:network2", "SSID:PoetryCameraSetup", ...])
+    ssids_list = [ssid[5:] for ssid in ssids_list if "PoetryCameraSetup" not in ssid]
 
     # Remove empty strings and duplicates
     unique_ssids_list = list(set(filter(None, ssids_list)))
 
-    return render_template('index.html', ssids_list=unique_ssids_list, version=version_info)
+    # Get the current network status
+    internet_status, ssid = get_network_status()
+
+    # Network connectivity icons
+    # Pass URLs for static files to the template
+    online_icon = url_for('static', filename='icon/wifi-online.svg')
+    offline_icon = url_for('static', filename='icon/wifi-offline.svg')
+    loading_icon = url_for('static', filename='icon/loading.svg')
+    refresh_icon = url_for('static', filename='icon/refresh.svg')
+
+    return render_template('index.html',
+      ssids_list=unique_ssids_list,
+      version=version_info,
+      internet_status=internet_status,
+      ssid=ssid,
+      online_icon=online_icon,
+      offline_icon=offline_icon,
+      loading_icon=loading_icon,
+      refresh_icon=refresh_icon
+    )
 
 
 @app.route('/submit', methods=['POST'])
@@ -159,34 +200,51 @@ def submit():
         connection_command.append(password)
     result = subprocess.run(connection_command, capture_output=True)
     
+    # default response data json that we will modify based on the results of connection_command
+    response_data = {
+        "status": "error",
+        "message": "Could not connect. Please try again."
+    }
+
     if result.stderr:
         stderr_message = result.stderr.decode().lower()
         if "psk: property is invalid" in stderr_message:
-            return jsonify({"status": "error", "message": "Wrong password"})
-        return jsonify({"status": "error", "message": stderr_message})
+            response_data["message"] = "Wrong password"
+        else:
+            response_data["message"] = stderr_message
     elif result.stdout:
         stdout_message = result.stdout.decode().lower()
         if "successfully activated" in stdout_message:
-            return jsonify({"status": "success", "message": result.stdout.decode()})
+            response_data["status"] = "success"
+            response_data["message"] = result.stdout.decode()
         elif "connection activation failed" in stdout_message:
-            return jsonify({"status": "error", "message": "Connection activation failed."})
+            response_data["message"] = "Connection activation failed."
         elif "no network with ssid" in stdout_message:
-            return jsonify({"status": "error", "message": "Could not find a wifi network with this name."})
+            response_data["message"] = "Could not find a wifi network with the specified SSID."
         elif "no valid secrets" in stdout_message:
-            return jsonify({"status": "error", "message": "Wrong password"})
+            response_data["message"] = "Wrong password"
         elif "no suitable device found" in stdout_message:
-            return jsonify({"status": "error", "message": "Could not connect. Possible hardware issue with the wifi adapter."})
+            response_data["message"] = "Could not connect. Possible hardware issue."
         elif "device not ready" in stdout_message:
             # TODO: just retry the command like 3 more times
-            return jsonify({"status": "error", "message": "The device is not ready."})
+            response_data["message"] = "The device is not ready."
         elif "invalid password" in stdout_message:
-            return jsonify({"status": "error", "message": "Wrong password"})
+            response_data["message"] = "Wrong password"
         elif "could not be found or the password is incorrect" in stdout_message:
-            return jsonify({"status": "error", "message": "The password is incorrect or the network could not be found."})
+            response_data["message"] = "The password is incorrect or the network could not be found."
         else:
-            return jsonify({"status": "error", "message": result.stdout.decode()})
-    return jsonify({"status": "error", "message": "Could not connect. Please try again."})
+            response_data["message"] = result.stdout.decode()
 
+    # get current network status (device may still be online even if the connection to new network failed)
+    internet_status, ssid = get_network_status()
+    response_data["internet_status"] = internet_status
+    response_data["ssid"] = ssid
+
+    return jsonify(response_data)
+
+# manually-entered SSIDs
+# This keeps trying to reconnect to the hotspot for 2 minutes
+# because the user may have entered their own cell phone hotspot info while it's not active yet\
 @app.route('/save_and_connect', methods=['POST'])
 def save_and_connect():
     manual_ssid = request.form['manual_ssid']
@@ -196,7 +254,7 @@ def save_and_connect():
     def hotspot_scanning():
         end_time = time.time() + 120  # Run for 2 minutes
         while time.time() < end_time:
-            result = attempt_connect_hotspot()
+            result = attempt_connect_hotspot(manual_ssid, manual_password)
             print(result)  # Log the result, can be changed to more sophisticated logging
             if "Success" in result:
                 break
@@ -206,6 +264,11 @@ def save_and_connect():
     return f"Attempting to connect to the {manual_ssid} network. If you are using a hotspot, go to your hotspot settings page and leave it open so it can connect. This could take up to 2 minutes."
 
 
+# check for connectivity status
+@app.route('/status')
+def status():
+    internet_status, ssid = get_network_status()
+    return jsonify({"status": internet_status, "ssid": ssid})
 
 
 if __name__ == '__main__':

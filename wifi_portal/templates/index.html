@@ -3,11 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WiFi Setup</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <title>Poetry Camera WiFi Setup</title>
 </head>
 <body>
-<h1>Wifi setup</h1>
-    <!-- TODO: show network that you're currently connected to -->
+    <h1>Poetry Camera WiFi</h1>
+
+    <!-- current connection status -->
+    <div class="section">
+    <div class="section-header">
+      <h2>Current status</h2>
+      <div id="refresh-status-button" class="button button-secondary"><img src="{{ refresh_icon }}" width="24" height="24"></div>
+    </div>
+    <div id="status-section">
+        <div id="status-indicator">
+             <img src="{% if internet_status == 'online' %}{{ online_icon }}{% elif internet_status == 'offline' %}{{ offline_icon }}{% else %}{{ loading_icon }}{% endif %}" alt="Status Icon">
+             <p>
+             {% if internet_status == 'online' %}
+                 {{ ssid }}
+             {% elif internet_status == 'offline' %}
+                 Offline
+             {% else %}
+                 Loading...
+             {% endif %}
+             </p>
+        </div>
+    </div>
+    </div>
+
+    <!-- connect to a new wifi network -->
+    <div class="section">
+    <h2>Connect to a new wifi network</h2>
     <form action="/submit" method="post">
       <label for="ssid">Choose a WiFi network:</label>
       <select name="ssid" id="ssid">
@@ -22,10 +49,15 @@
       <p>
         <input type="checkbox" id="show-password" /> <span>show password</span>
       </p>
-      <input type="submit" value="Connect" />
+      <input type="submit" value="Connect" class="button button-primary"/>
     </form>
 
-<h2>Manual Hotspot Entry</h2>
+    <p id="connect-result"></p>
+    </div>
+
+    <!-- for hidden networks -->
+    <div class="section">
+    <h2>Network not listed? Add here</h2>
     <form id="manual-form" action="/save_and_connect" method="post">
       <label for="manual-ssid">SSID:</label>
       <input type="text" name="manual_ssid" id="manual-ssid" value="{{ manual_ssid }}" />
@@ -34,27 +66,95 @@
       <p>
         <input type="checkbox" id="show-manual-password" /> <span>show password</span>
       </p>
-      <input type="submit" value="Save and Connect" />
+      <input type="submit" value="Save and Connect" class="button button-primary"/>
     </form>
-    <p id="connect-result"></p>
+    </div>
 
     <p>{{ version }}</p>
     <script>
-      document
-        .getElementById("show-password")
-        .addEventListener("change", function () {
-          var passwordInput = document.getElementById("password");
-          if (this.checked) {
-            passwordInput.type = "text";
-          } else {
-            passwordInput.type = "password";
-          }
-        });
-      document.getElementById("show-manual-password").addEventListener("change", function () {
-        var passwordInput = document.getElementById("manual-password");
-        passwordInput.type = this.checked ? "text" : "password";
-      });
 
+        // Function to render connection status
+        function renderStatus(status, ssid="") {
+            const statusIndicatorDiv = document.getElementById("status-indicator");
+            let statusHtml = '';
+            if (status === "online") {
+                statusHtml = `<img src="{{ online_icon }}" alt="Online"><p>${ssid}</p>`;
+            } else if (status === "offline") {
+                statusHtml = `<img src="{{ offline_icon }}" alt="Offline"><p>Offline</p>`;
+            } else {
+                statusHtml = `<img src="{{ loading_icon }}" alt="Loading..."><p>Loading...</p>`;
+            }
+            statusIndicatorDiv.innerHTML = statusHtml;
+        }
+
+
+      // Function to check connection status and display at top of page
+      function updateStatus() {
+          statusHtml = `<img src="{{ loading_icon }}" alt="Loading...">Loading...`;
+
+          fetch("/status")
+          .then(response => response.json())
+          .then(data => {
+                renderStatus(data.status, data.ssid);
+          })
+         .catch(error => {
+              renderStatus("offline", "");
+              const statusDiv = document.getElementById("status");
+              // TODO: DISPLAY THIS ERROR MESSAGE SOMEWHERE USEFUL
+              //statusDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+          });
+      }
+
+
+      // Function to handle form submission
+      function handleFormSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            fetch("/submit", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultDiv = document.getElementById("connect-result");
+                if (data.status === "success") {
+                    resultDiv.innerHTML = `<p style="color: green;">${data.message}</p>`;
+                    renderStatus("online", data.ssid);
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">${data.message}</p>`;
+                    renderStatus("offline");
+                }
+            })
+            .catch(error => {
+                const resultDiv = document.getElementById("connect-result");
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                // TODO: HOW TO RENDER STATUS? SHOULD FORM SUBMIT RESPOND WITH WHETHER IT'S STILL ONLINE OR NOT, AND THE SSID?
+            });
+        }
+
+      // call the functions when DOM is loaded
+      document.addEventListener("DOMContentLoaded", function() {
+            const form = document.querySelector("form");
+            form.addEventListener("submit", handleFormSubmit);
+
+
+	    // Show/hide password toggle for password field
+            document.getElementById("show-password").addEventListener("change", function () {
+                var passwordInput = document.getElementById("password");
+                passwordInput.type = this.checked ? "text" : "password";
+            });	
+
+
+	    // Show/hide password toggle for manual password field
+            document.getElementById("show-manual-password").addEventListener("change", function () {
+                var passwordInput = document.getElementById("manual-password");
+                passwordInput.type = this.checked ? "text" : "password";
+            });
+
+            // Check connection status again when you click refresh button
+            document.getElementById("refresh-status-button").addEventListener("click", updateStatus);
+
+      });      
     </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 /* Apply to all devices */
 body {
-  font-size: 1.5em;
+  font-size: 1em;
+  font-family: "Arial", sans-serif;
 }
 
 input[type="text"],
@@ -10,6 +11,45 @@ select {
   max-width: 300px;
   box-sizing: border-box;
   padding: 10px;
+}
+
+.button{
+  border-radius: 8px;
+  padding: 12px;
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #d7d7d7;
+}
+
+.button:hover{
+  cursor: pointer;
+}
+
+/* TODO: ADD HOVER STATES */
+
+.button-primary{
+  background-color: #000;
+  color: #fff;
+  border: 1px solid #000;
+}
+
+#refresh-status-button{
+  border-radius: 100%;
+  width: 44px;
+  height: 44px;
+}
+
+.section-header{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+}
+
+.section{
+  border-bottom: 1px solid #d7d7d7;
+  padding: 20px 0;
+  margin: 20px 0;
 }
 
 /* Apply to screens smaller than 600px (typical breakpoint for mobile devices) */
@@ -62,3 +102,4 @@ select {
             background-color: #f0f0f0;
             text-decoration: underline;
         }
+
