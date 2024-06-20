@@ -64,7 +64,7 @@ with open(SOFTWARE_VERSION_FILE_PATH, 'w') as version_file:
 # If not, navigate to poetrycamera.local in your browser
 #######################################################
 import json, threading, time
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, url_for
 app = Flask(__name__)
 
 # WIFI_DEVICE specifies internet client (requires separate wifi adapter)
@@ -171,11 +171,21 @@ def index():
     # Get the current network status
     internet_status, ssid = get_network_status()
 
+    # Network connectivity icons
+    # Pass URLs for static files to the template
+    online_icon = url_for('static', filename='icon/wifi-online.svg')
+    offline_icon = url_for('static', filename='icon/wifi-offline.svg')
+    loading_icon = url_for('static', filename='icon/loading.svg')
+
     return render_template('index.html',
       ssids_list=unique_ssids_list,
       version=version_info,
       internet_status=internet_status,
-      ssid=ssid)
+      ssid=ssid,
+      online_icon=online_icon,
+      offline_icon=offline_icon,
+      loading_icon=loading_icon
+    )
 
 
 @app.route('/submit', methods=['POST'])
@@ -188,33 +198,47 @@ def submit():
         connection_command.append(password)
     result = subprocess.run(connection_command, capture_output=True)
     
+    # default response data json that we will modify based on the results of connection_command
+    response_data = {
+        "status": "error",
+        "message": "Could not connect. Please try again."
+    }
+
     if result.stderr:
         stderr_message = result.stderr.decode().lower()
         if "psk: property is invalid" in stderr_message:
-            return jsonify({"status": "error", "message": "Wrong password"})
-        return jsonify({"status": "error", "message": stderr_message})
+            response_data["message"] = "Wrong password"
+        else:
+            response_data["message"] = stderr_message
     elif result.stdout:
         stdout_message = result.stdout.decode().lower()
         if "successfully activated" in stdout_message:
-            return jsonify({"status": "success", "message": result.stdout.decode()})
+            response_data["status"] = "success"
+            response_data["message"] = result.stdout.decode()
         elif "connection activation failed" in stdout_message:
-            return jsonify({"status": "error", "message": "Connection activation failed."})
+            response_data["message"] = "Connection activation failed."
         elif "no network with ssid" in stdout_message:
-            return jsonify({"status": "error", "message": "Could not find a wifi network with this name."})
+            response_data["message"] = "Could not find a wifi network with the specified SSID."
         elif "no valid secrets" in stdout_message:
-            return jsonify({"status": "error", "message": "Wrong password"})
+            response_data["message"] = "Wrong password"
         elif "no suitable device found" in stdout_message:
-            return jsonify({"status": "error", "message": "Could not connect. Possible hardware issue with the wifi adapter."})
+            response_data["message"] = "Could not connect. Possible hardware issue."
         elif "device not ready" in stdout_message:
             # TODO: just retry the command like 3 more times
-            return jsonify({"status": "error", "message": "The device is not ready."})
+            response_data["message"] = "The device is not ready."
         elif "invalid password" in stdout_message:
-            return jsonify({"status": "error", "message": "Wrong password"})
+            response_data["message"] = "Wrong password"
         elif "could not be found or the password is incorrect" in stdout_message:
-            return jsonify({"status": "error", "message": "The password is incorrect or the network could not be found."})
+            response_data["message"] = "The password is incorrect or the network could not be found."
         else:
-            return jsonify({"status": "error", "message": result.stdout.decode()})
-    return jsonify({"status": "error", "message": "Could not connect. Please try again."})
+            response_data["message"] = result.stdout.decode()
+
+    # get current network status (device may still be online even if the connection to new network failed)
+    internet_status, ssid = get_network_status()
+    response_data["internet_status"] = internet_status
+    response_data["ssid"] = ssid
+
+    return jsonify(response_data)
 
 # manually-entered SSIDs
 # This keeps trying to reconnect to the hotspot for 2 minutes

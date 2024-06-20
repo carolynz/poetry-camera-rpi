@@ -10,7 +10,10 @@
 
     <!-- current connection status -->
     <div id="status">
-        <p>Status: {{ internet_status }} 
+        <div id="status-icon">
+             <img src="{% if internet_status == 'online' %}{{ online_icon }}{% elif internet_status == 'offline' %}{{ offline_icon }}{% else %}{{ loading_icon }}{% endif %}" alt="Status Icon">
+        </div>
+        <p>
            {% if internet_status == 'online' %}
                (Connected to {{ ssid }})
            {% endif %}
@@ -55,19 +58,32 @@
     <p>{{ version }}</p>
     <script>
 
+        // Function to render connection status
+        function renderStatus(status, ssid="") {
+            const statusDiv = document.getElementById("status");
+            let statusHtml = '';
+            if (status === "online") {
+                statusHtml = `<img src="{{ online_icon }}" alt="Online">${ssid}`;
+            } else if (status === "offline") {
+                statusHtml = `<img src="{{ offline_icon }}" alt="Offline">Offline`;
+            } else {
+                statusHtml = `<img src="{{ loading_icon }}" alt="Loading...">Loading...`;
+            }
+            statusDiv.innerHTML = statusHtml;
+        }
+
+
       // Function to check connection status and display at top of page
       function updateStatus() {
+          statusHtml = `<img src="{{ loading_icon }}" alt="Loading...">Loading...`;
+
           fetch("/status")
           .then(response => response.json())
           .then(data => {
-               const statusDiv = document.getElementById("status");
-               if (data.status === "online") {
-                    statusDiv.innerHTML = `<p style="color: green;">Status: Online (Connected to ${data.ssid})</p>`;
-               } else {
-                    statusDiv.innerHTML = `<p style="color: red;">Status: Offline</p>`;
-               }
+                renderStatus(data.status, data.ssid);
           })
          .catch(error => {
+              renderStatus("offline", "");
               const statusDiv = document.getElementById("status");
               statusDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
           });
@@ -87,13 +103,16 @@
                 const resultDiv = document.getElementById("connect-result");
                 if (data.status === "success") {
                     resultDiv.innerHTML = `<p style="color: green;">${data.message}</p>`;
+                    renderStatus("online", data.ssid);
                 } else {
                     resultDiv.innerHTML = `<p style="color: red;">${data.message}</p>`;
+                    renderStatus("offline");
                 }
             })
             .catch(error => {
                 const resultDiv = document.getElementById("connect-result");
                 resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                // TODO: HOW TO RENDER STATUS? SHOULD FORM SUBMIT RESPOND WITH WHETHER IT'S STILL ONLINE OR NOT, AND THE SSID?
             });
         }
 
