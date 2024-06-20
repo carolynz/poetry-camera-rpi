@@ -138,10 +138,9 @@ def index():
         return f"Error: Unable to retrieve WiFi networks. Likely a wifi adapter issue. {e}"
     
     # Remove 'PoetryCameraSetup' from the list, that's the camera's own wifi network
-    ssids_list = [ssid.lstrip("SSID:") for ssid in ssids_list if "PoetryCameraSetup" not in ssid]
-    
-
-    # TODO: why does the network name list sometimes drop first letter????
+    # And remove the prefix "SSID:" from networks in the list
+    # (We expect the ssids_list to look like: ["SSID:network1", "SSID:network2", "SSID:PoetryCameraSetup", ...])
+    ssids_list = [ssid[5:] for ssid in ssids_list if "PoetryCameraSetup" not in ssid]
 
     # Remove empty strings and duplicates
     unique_ssids_list = list(set(filter(None, ssids_list)))
