@@ -3,12 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WiFi Setup</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <title>Poetry Camera WiFi Setup</title>
 </head>
 <body>
-    <h1>Wifi setup</h1>
+    <h1>Poetry Camera WiFi</h1>
 
     <!-- current connection status -->
+    <div class="section">
+    <div class="section-header">
+      <h2>Current status</h2>
+      <div id="refresh-status-button" class="button button-secondary"><img src="{{ refresh_icon }}" width="24" height="24"></div>
+    </div>
     <div id="status-section">
         <div id="status-indicator">
              <img src="{% if internet_status == 'online' %}{{ online_icon }}{% elif internet_status == 'offline' %}{{ offline_icon }}{% else %}{{ loading_icon }}{% endif %}" alt="Status Icon">
@@ -22,10 +29,12 @@
              {% endif %}
              </p>
         </div>
-        <button id="refresh-status-button">Refresh</button>
+    </div>
     </div>
 
     <!-- connect to a new wifi network -->
+    <div class="section">
+    <h2>Connect to a new wifi network</h2>
     <form action="/submit" method="post">
       <label for="ssid">Choose a WiFi network:</label>
       <select name="ssid" id="ssid">
@@ -40,12 +49,14 @@
       <p>
         <input type="checkbox" id="show-password" /> <span>show password</span>
       </p>
-      <input type="submit" value="Connect" />
+      <input type="submit" value="Connect" class="button button-primary"/>
     </form>
 
     <p id="connect-result"></p>
+    </div>
 
     <!-- for hidden networks -->
+    <div class="section">
     <h2>Network not listed? Add here</h2>
     <form id="manual-form" action="/save_and_connect" method="post">
       <label for="manual-ssid">SSID:</label>
@@ -55,9 +66,9 @@
       <p>
         <input type="checkbox" id="show-manual-password" /> <span>show password</span>
       </p>
-      <input type="submit" value="Save and Connect" />
+      <input type="submit" value="Save and Connect" class="button button-primary"/>
     </form>
-
+    </div>
 
     <p>{{ version }}</p>
     <script>
@@ -141,7 +152,7 @@
             });
 
             // Check connection status again when you click refresh button
-            document.getElementById("refresh-button").addEventListener("click", updateStatus);
+            document.getElementById("refresh-status-button").addEventListener("click", updateStatus);
 
       });      
     </script>

@@ -176,6 +176,7 @@ def index():
     online_icon = url_for('static', filename='icon/wifi-online.svg')
     offline_icon = url_for('static', filename='icon/wifi-offline.svg')
     loading_icon = url_for('static', filename='icon/loading.svg')
+    refresh_icon = url_for('static', filename='icon/refresh.svg')
 
     return render_template('index.html',
       ssids_list=unique_ssids_list,
@@ -184,7 +185,8 @@ def index():
       ssid=ssid,
       online_icon=online_icon,
       offline_icon=offline_icon,
-      loading_icon=loading_icon
+      loading_icon=loading_icon,
+      refresh_icon=refresh_icon
     )
 
 
