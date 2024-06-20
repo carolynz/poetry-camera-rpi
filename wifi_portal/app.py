@@ -186,6 +186,9 @@ def submit():
             return jsonify({"status": "error", "message": result.stdout.decode()})
     return jsonify({"status": "error", "message": "Could not connect. Please try again."})
 
+# manually-entered SSIDs
+# This keeps trying to reconnect to the hotspot for 2 minutes
+# because the user may have entered their own cell phone hotspot info while it's not active yet\
 @app.route('/save_and_connect', methods=['POST'])
 def save_and_connect():
     manual_ssid = request.form['manual_ssid']
@@ -205,6 +208,32 @@ def save_and_connect():
     return f"Attempting to connect to the {manual_ssid} network. If you are using a hotspot, go to your hotspot settings page and leave it open so it can connect. This could take up to 2 minutes."
 
 
+# check for connectivity status
+@app.route('/status')
+def status():
+  internet_status = "offline"
+  ssid = ""
+
+  try:
+    # Try to get the SSID of active network via Network Manager (not pinging)
+    # If no active network listed, we will assume device is offline / this code doesn't run
+    ssid_result = subprocess.run(
+      ['nmcli', '-t', '-f', 'device,active,ssid', 'device', 'wifi'], 
+      capture_output=True
+    )
+    ssid_output = ssid_result.stdout.decode().strip().split('\n')
+    for line in ssid_output:
+      if line.startswith(f"{WIFI_DEVICE}:yes:"):
+        ssid = line.split(":")[2]
+        internet_status = "online"
+        break
+    print(f"status: {internet_status}, ssid: {ssid}")
+    return jsonify({"status": internet_status, "ssid": ssid})
+
+  # catch exceptions, i.e. subprocess doesn't have enough memory to run
+  except Exception as e:
+    print("exception in /status")
+    return jsonify({"status": "offline", "ssid": ""})
 
 
 if __name__ == '__main__':

@@ -6,7 +6,10 @@
     <title>WiFi Setup</title>
 </head>
 <body>
-<h1>Wifi setup</h1>
+    <h1>Wifi setup</h1>
+    <div id="status">
+        <p>Status: Loading...</p>
+    </div>
     <!-- TODO: show network that you're currently connected to -->
     <form action="/submit" method="post">
       <label for="ssid">Choose a WiFi network:</label>
@@ -25,7 +28,10 @@
       <input type="submit" value="Connect" />
     </form>
 
-<h2>Manual Hotspot Entry</h2>
+    <p id="connect-result"></p>
+
+
+    <h2>Manual Hotspot Entry</h2>
     <form id="manual-form" action="/save_and_connect" method="post">
       <label for="manual-ssid">SSID:</label>
       <input type="text" name="manual_ssid" id="manual-ssid" value="{{ manual_ssid }}" />
@@ -36,10 +42,15 @@
       </p>
       <input type="submit" value="Save and Connect" />
     </form>
-    <p id="connect-result"></p>
+
 
     <p>{{ version }}</p>
     <script>
+      // show password for the top field
+      // TODO: when the checkbox is checked before the user types in the password, 
+      // show the password as plaintext
+      // or just never start with the box checked
+
       document
         .getElementById("show-password")
         .addEventListener("change", function () {
@@ -50,10 +61,66 @@
             passwordInput.type = "password";
           }
         });
+
+      // show password for the manual field
       document.getElementById("show-manual-password").addEventListener("change", function () {
         var passwordInput = document.getElementById("manual-password");
         passwordInput.type = this.checked ? "text" : "password";
       });
+
+      // handle form submission and render results on the page
+      document.addEventListener("DOMContentLoaded", function() {
+            const form = document.querySelector("form");
+            form.addEventListener("submit", function(event) {
+                event.preventDefault();
+                const formData = new FormData(form);
+                fetch("/submit", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const resultDiv = document.getElementById("connect-result");
+                    if (data.status === "success") {
+                        resultDiv.innerHTML = `<p style="color: green;">Success! Connected</p>`;
+                    } else {
+                        resultDiv.innerHTML = `<p style="color: red;">${data.message}</p>`;
+                    }
+                })
+                .catch(error => {
+                    const resultDiv = document.getElementById("result");
+                    resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                });
+            });
+
+            // Function to check connection status and display at top of page
+            function updateStatus() {
+                fetch("/status")
+                .then(response => response.json())
+                .then(data => {
+                    const statusDiv = document.getElementById("status");
+                    if (data.status === "online") {
+                        statusDiv.innerHTML = `<p style="color: green;">Status: Online (Connected to ${data.ssid})</p>`;
+                    //} else if (data.status === "offline") {
+                    //    statusDiv.innerHTML = `<p style="color: red;">Status: Offline</p>`;
+                    } else {
+                        statusDiv.innerHTML = `<p style="color: red;">Status: Offline</p>`;
+                    }
+                })
+                .catch(error => {
+                    const statusDiv = document.getElementById("status");
+                    statusDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                });
+            }
+
+            // Poll for connection status every 2 seconds
+            setInterval(updateStatus, 2000);
+
+            // Check connection status when page loads
+            updateStatus();
+
+      });
+      
 
     </script>
 </body>
