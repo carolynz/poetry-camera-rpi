@@ -364,13 +364,6 @@ def get_current_knob():
 # CHECK INTERNET CONNECTION
 ################################
 
-def printWifiQr():
-  printer.println('step 1:            step 2:')
-  printer.feed()
-  printer.begin(255) #set heat time to max, for darkest print
-  printer.printImage(WIFI_QR_IMAGE_PATH)
-  printer.begin(PRINTER_HEAT_TIME) # reset heat time
-
 # Checks internet connection upon startup
 def check_internet_connection():
   print("Checking internet connection upon startup")
@@ -386,26 +379,12 @@ def check_internet_connection():
     print("CAMERA ONLINE")
     printer.println("online, connected, awake")
     printer.println("ready to print verse")
-    #printer.feed()
-    #printer.println('step 1:            step 2:')
-    #printer.feed()
-    #printWifiQr()
-
-    # Get the name of the connected Wi-Fi network
-    # try:
-    #   network_name = subprocess.check_output(['iwgetid', '-r']).decode().strip()
-    #   print(f"Connected to network: {network_name}")
-    #   printer.println(f"connected to: {network_name}")
-    # except Exception as e:
-    #   print("Error while getting network name: ", e)
     
   except subprocess.CalledProcessError:
     internet_connected = False
     print("no internet on startup!")
-    printer.println("offline, disconnected")
-    printer.println('scan codes to connect')
-    printer.feed()
-    printWifiQr()
+    printer.println("is offline, next steps")
+    printer.println('under camera')
 
   printer.feed(3)
 
@@ -465,10 +444,8 @@ def periodic_internet_check(interval):
             printer.feed()
             printer.println(time_string)
             printer.println("lost my internet")
-            printer.println('scan codes to get back online')
-            printer.println('verses will resume')
-            printer.feed()
-            printWifiQr()
+            printer.println("scan codes under camera")
+            printer.println("to get back online")
             printer.feed(3)
     except Exception as e:
       print(f"{time_string} Exception in periodic_internet_check: {e}")
