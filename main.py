@@ -126,6 +126,10 @@ def initialize():
   if internet_connected == True:
     led.on()
 
+  # Define a global event to stop background threads if device is shutting down
+  global shutdown_event
+  shutdown_event = threading.Event()
+
   # And periodically check internet in background thread
   start_periodic_internet_check()
 
@@ -286,6 +290,9 @@ def print_footer():
 # POWER BUTTON
 ##############
 def shutdown():
+  # Set the stop event to signal threads to stop
+  shutdown_event.set()
+
   print('shutting down...')
 
   # blink LED before shutting down
@@ -392,11 +399,13 @@ def check_internet_connection():
 ###############################
 # CHECK INTERNET CONNECTION PERIODICALLY, PRINT ERROR MESSAGE IF DISCONNECTED
 ###############################
-# NOTE: VERY BUGGY AND STRANGE, LIKELY SOME STATE MANAGEMENT ISSUE
 def periodic_internet_check(interval):
   global internet_connected, camera_at_rest
 
-  while True:
+  # The following code runs on loop unless the device is shutting down
+  # (Because we don't need to print "I'm offline!" messages while the device is shutting down)
+  # (Plus, some bugs have come from the device shutting down in the middle of printing the "i'm offine" QR code)
+  while not shutdown_event.is_set():
     now = datetime.now()
     time_string = now.strftime('%-I:%M %p')
     try:
@@ -412,7 +421,9 @@ def periodic_internet_check(interval):
         # If previously disconnected but now have internet, print message
         if not internet_connected:
           print(time_string + ": I'm back online!")
+          printer.justify('C') # center align header text
           printer.println('back online!')
+          printer.justify('L')
           printer.feed(3)
           internet_connected = True
           # LED on to indicate camera is ready -- should probably wrap this in a separate fxn with internet_connected=True
