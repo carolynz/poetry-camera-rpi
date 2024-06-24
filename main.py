@@ -157,7 +157,14 @@ def take_photo_and_print_poem():
   # FOR DEBUGGING: note that image has been saved
   #print('----- SUCCESS: image saved locally')
 
-  print_header()
+  # Get current datetime for printing & prompt, printed like:
+  # Jan 1, 2023
+  # 8:11 PM
+  now = datetime.now()
+  date_string = now.strftime('%b %-d, %Y')
+  time_string = now.strftime('%-I:%M %p')
+
+  print_header(date_string, time_string)
 
   #########################
   # Send saved image to API
@@ -176,7 +183,7 @@ def take_photo_and_print_poem():
     print("sending request...")
     response = requests.post(
       SERVER_URL,
-      json={"image": image_data, "deviceId": device_id, "knob": current_knob}
+      json={"image": image_data, "deviceId": device_id, "knob": current_knob, "date": date_string, "time": time_string}
     )
 
     # Check if request was successful
@@ -194,7 +201,7 @@ def take_photo_and_print_poem():
 
   except Exception as e:
     error_message = str(e)
-    print("Error during poem generation: ", error_message)
+    print("Error during poem writing: ", error_message)
     print_poem("Oops, something went wrong, but it's not your fault. Maybe a wifi issue?")
     print_poem("support@poetry.camera")
     printer.feed(3)
@@ -237,17 +244,11 @@ def print_poem(poem):
 
 
 # print date/time/location header
-def print_header():
+def print_header(date_string, time_string):
   # Get current date+time -- will use for printing and file naming
   now = datetime.now()
 
-  # Format printed datetime like:
-  # Jan 1, 2023
-  # 8:11 PM
   printer.justify('C') # center align header text
-  date_string = now.strftime('%b %-d, %Y')
-  time_string = now.strftime('%-I:%M %p')
-  #printer.println('\n')
   printer.println(date_string)
   printer.println(time_string)
 
