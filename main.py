@@ -157,7 +157,14 @@ def take_photo_and_print_poem():
   # FOR DEBUGGING: note that image has been saved
   #print('----- SUCCESS: image saved locally')
 
-  print_header()
+  # Get current datetime for printing & prompt, printed like:
+  # Jan 1, 2023
+  # 8:11 PM
+  now = datetime.now()
+  date_string = now.strftime('%b %-d, %Y')
+  time_string = now.strftime('%-I:%M %p')
+
+  print_header(date_string, time_string)
 
   #########################
   # Send saved image to API
@@ -176,7 +183,7 @@ def take_photo_and_print_poem():
     print("sending request...")
     response = requests.post(
       SERVER_URL,
-      json={"image": image_data, "deviceId": device_id, "knob": current_knob}
+      json={"image": image_data, "deviceId": device_id, "knob": current_knob, "date": date_string, "time": time_string}
     )
 
     # Check if request was successful
@@ -194,7 +201,7 @@ def take_photo_and_print_poem():
 
   except Exception as e:
     error_message = str(e)
-    print("Error during poem generation: ", error_message)
+    print("Error during poem writing: ", error_message)
     print_poem("Oops, something went wrong, but it's not your fault. Maybe a wifi issue?")
     print_poem("support@poetry.camera")
     printer.feed(3)
@@ -237,17 +244,11 @@ def print_poem(poem):
 
 
 # print date/time/location header
-def print_header():
+def print_header(date_string, time_string):
   # Get current date+time -- will use for printing and file naming
   now = datetime.now()
 
-  # Format printed datetime like:
-  # Jan 1, 2023
-  # 8:11 PM
   printer.justify('C') # center align header text
-  date_string = now.strftime('%b %-d, %Y')
-  time_string = now.strftime('%-I:%M %p')
-  #printer.println('\n')
   printer.println(date_string)
   printer.println(time_string)
 
@@ -364,13 +365,6 @@ def get_current_knob():
 # CHECK INTERNET CONNECTION
 ################################
 
-def printWifiQr():
-  printer.println('step 1:            step 2:')
-  printer.feed()
-  printer.begin(255) #set heat time to max, for darkest print
-  printer.printImage(WIFI_QR_IMAGE_PATH)
-  printer.begin(PRINTER_HEAT_TIME) # reset heat time
-
 # Checks internet connection upon startup
 def check_internet_connection():
   print("Checking internet connection upon startup")
@@ -386,26 +380,12 @@ def check_internet_connection():
     print("CAMERA ONLINE")
     printer.println("online, connected, awake")
     printer.println("ready to print verse")
-    #printer.feed()
-    #printer.println('step 1:            step 2:')
-    #printer.feed()
-    #printWifiQr()
-
-    # Get the name of the connected Wi-Fi network
-    # try:
-    #   network_name = subprocess.check_output(['iwgetid', '-r']).decode().strip()
-    #   print(f"Connected to network: {network_name}")
-    #   printer.println(f"connected to: {network_name}")
-    # except Exception as e:
-    #   print("Error while getting network name: ", e)
     
   except subprocess.CalledProcessError:
     internet_connected = False
     print("no internet on startup!")
-    printer.println("offline, disconnected")
-    printer.println('scan codes to connect')
-    printer.feed()
-    printWifiQr()
+    printer.println("is offline, next steps")
+    printer.println('under camera')
 
   printer.feed(3)
 
@@ -465,10 +445,8 @@ def periodic_internet_check(interval):
             printer.feed()
             printer.println(time_string)
             printer.println("lost my internet")
-            printer.println('scan codes to get back online')
-            printer.println('verses will resume')
-            printer.feed()
-            printWifiQr()
+            printer.println("scan codes under camera")
+            printer.println("to get back online")
             printer.feed(3)
     except Exception as e:
       print(f"{time_string} Exception in periodic_internet_check: {e}")
